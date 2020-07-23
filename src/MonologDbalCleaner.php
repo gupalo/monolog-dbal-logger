@@ -13,6 +13,8 @@ class MonologDbalCleaner
 
     private int $maxRows;
 
+    private int $lastTimeCleaned = 0;
+
     public function __construct(
         Connection $connection,
         string $table = '_log',
@@ -32,11 +34,22 @@ class MonologDbalCleaner
 
     protected function needRun(bool $force): bool
     {
-        return $force || time() % 1000 === 0;
+        return ($force || $this->isTimeToClean());
+    }
+
+    protected function isTimeToClean(): bool
+    {
+        $time = time();
+
+        return (
+            $time - $this->lastTimeCleaned >= 60 &&
+            $time % 1000 === 0
+        );
     }
 
     protected function run(): void
     {
+        $this->lastTimeCleaned = time();
         try {
             $maxId = $this->getMaxId();
             $this->deleteWhereIdLessThan($maxId);

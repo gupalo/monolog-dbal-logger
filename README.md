@@ -58,6 +58,14 @@ Configuration example:
                 level: debug
                 channels: ["!event", "!request", "!security"]
 
+Configure
+---------
+
+Params in `MonologDbalLogger::__construct`:
+
+* `string $table = '_log'`: table name 
+* `int $maxRows = 100000`: if you have more rows than `$maxRows` then cleaner will eventually (1 in 1000 chances) remove them
+
 Extend
 ------
 
