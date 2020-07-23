@@ -18,21 +18,21 @@ class MyMonologDbalLogger extends MonologDbalLogger
     protected function getAdditionalData(): array
     {
         return [
-            'cmd' => $this->leftNull($this->context['cmd'], 255),
-            'method' => $this->leftNull($this->context['method'], 255),
-            'uid' => $this->leftNull($this->context['uid'], 32),
+            'cmd' => $this->leftNull($this->context['cmd'] ?? null, 255),
+            'method' => $this->leftNull($this->context['method'] ?? null, 255),
+            'uid' => $this->leftNull($this->context['uid'] ?? null, 32),
             'count' => $this->intNull($this->context['count'] ?? null),
             'time' => $this->floatNull($this->context['time'] ?? null),
-            'exception_class' => $this->leftNull($this->context['exception_class'], 1024),
-            'exception_message' => $this->leftNull($this->context['exception_message'], 1024),
-            'exception_line' => $this->leftNull($this->context['exception_line'], 1024),
-            'exception_trace' => $this->leftNull($this->context['exception_trace'], 65536),
+            'exception_class' => $this->leftNull($this->context['exception_class'] ?? null, 1024),
+            'exception_message' => $this->leftNull($this->context['exception_message'] ?? null, 1024),
+            'exception_line' => $this->leftNull($this->context['exception_line'] ?? null, 1024),
+            'exception_trace' => $this->leftNull($this->context['exception_trace'] ?? null, 65536),
         ];
     }
 
     protected function fixCmd(): void
     {
-        if ($this->record['message'] ?? '' === 'cmd' && empty($this->context['cmd']) && !empty($this->context['name'])) {
+        if (($this->record['message'] ?? '') === 'cmd' && empty($this->context['cmd']) && !empty($this->context['name'])) {
             $this->additionalFields['cmd'] = $this->context['name'];
             unset($this->context['name']);
         }
