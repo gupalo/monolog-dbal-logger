@@ -26,15 +26,15 @@ class MyMonologDbalLogger extends MonologDbalLogger
     protected function getAdditionalData(): array
     {
         return [
-            'cmd' => $this->leftNull($this->context['cmd'] ?? null, 255),
-            'method' => $this->leftNull($this->context['method'] ?? null, 255),
-            'uid' => $this->leftNull($this->context['uid'] ?? null, 32),
-            'count' => $this->intNull($this->context['count'] ?? null),
-            'time' => $this->floatNull($this->context['time'] ?? null),
-            'exception_class' => $this->leftNull($this->context['exception_class'] ?? null, 1024),
-            'exception_message' => $this->leftNull($this->context['exception_message'] ?? null, 1024),
-            'exception_line' => $this->leftNull($this->context['exception_line'] ?? null, 1024),
-            'exception_trace' => $this->leftNull($this->context['exception_trace'] ?? null, 65536),
+            'cmd' => $this->leftNull($this->additionalFields['cmd'] ?? null, 255),
+            'method' => $this->leftNull($this->additionalFields['method'] ?? null, 255),
+            'uid' => $this->leftNull($this->additionalFields['uid'] ?? null, 32),
+            'count' => $this->intNull($this->additionalFields['count'] ?? null),
+            'time' => $this->floatNull($this->additionalFields['time'] ?? null),
+            'exception_class' => $this->leftNull($this->additionalFields['exception_class'] ?? null, 1024),
+            'exception_message' => $this->leftNull($this->additionalFields['exception_message'] ?? null, 1024),
+            'exception_line' => $this->leftNull($this->additionalFields['exception_line'] ?? null, 1024),
+            'exception_trace' => $this->leftNull($this->additionalFields['exception_trace'] ?? null, 65536),
         ];
     }
 
