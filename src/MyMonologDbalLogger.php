@@ -33,8 +33,8 @@ class MyMonologDbalLogger extends MonologDbalLogger
     protected function fixCmd(): void
     {
         if ($this->record['message'] ?? '' === 'cmd' && empty($this->context['cmd']) && !empty($this->context['name'])) {
-            $this->additionalFields['cmd'] = $this->additionalFields['name'];
-            unset($this->additionalFields['name']);
+            $this->additionalFields['cmd'] = $this->context['name'];
+            unset($this->context['name']);
         }
     }
 

@@ -54,7 +54,7 @@ Configuration example:
         handlers:
             db:
                 type: service
-                id: '@db_logger'
+                id: 'db_logger' # note - no "@"
                 level: debug
                 channels: ["!event", "!request", "!security"]
 

@@ -4,7 +4,6 @@ namespace Gupalo\MonologDbalLogger;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
-use ErrorException;
 use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
 use Throwable;
@@ -64,9 +63,7 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected function needSkip(): bool
     {
-        $e = $this->record['context']['exception'] ?? null;
-
-        return ($e && $e instanceof ErrorException && $e->getSeverity() === E_USER_DEPRECATED);
+        return false;
     }
 
     protected function initContextAndAdditionalFields(): void
