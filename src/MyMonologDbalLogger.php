@@ -2,10 +2,18 @@
 
 namespace Gupalo\MonologDbalLogger;
 
+use ErrorException;
 use Throwable;
 
 class MyMonologDbalLogger extends MonologDbalLogger
 {
+    protected function needSkip(): bool
+    {
+        $e = $this->record['context']['exception'] ?? null;
+
+        return ($e && $e instanceof ErrorException && $e->getSeverity() === E_USER_DEPRECATED);
+    }
+
     protected function initContextAndAdditionalFields(): void
     {
         parent::initContextAndAdditionalFields();
