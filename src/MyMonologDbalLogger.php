@@ -55,7 +55,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
             $data['exception_message'] = $e->getMessage();
             $data['exception_line'] = sprintf('%s:%s', $e->getFile(), $e->getLine());
             $data['exception_trace'] = $e->getTraceAsString();
-            unset($this->additionalFields['exception']);
+            unset($this->context['exception']);
         }
 
         $this->additionalFields = array_merge($data, $this->additionalFields);
