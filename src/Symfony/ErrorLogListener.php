@@ -186,7 +186,7 @@ class ErrorLogListener implements EventSubscriberInterface
                 $options['arguments'] = $arguments;
             }
             if (!empty($options)) {
-                $context['input'] = self::stringify($options);
+                $context['input'] = $options;
 
                 return $context;
             }
