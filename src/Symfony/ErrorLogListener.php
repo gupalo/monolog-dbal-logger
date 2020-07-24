@@ -143,7 +143,7 @@ class ErrorLogListener implements EventSubscriberInterface
     {
         if (!is_string($data)) {
             try {
-                $data = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT, 10);
+                $data = json_encode($data, JSON_THROW_ON_ERROR, 10);
             } catch (Throwable $e) {
                 $data = (string)$data;
             }
