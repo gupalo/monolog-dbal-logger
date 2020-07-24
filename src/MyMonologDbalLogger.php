@@ -49,13 +49,20 @@ class MyMonologDbalLogger extends MonologDbalLogger
     protected function initException(): void
     {
         $data = ['exception_class' => null, 'exception_message' => null, 'exception_line' => null, 'exception_trace' => null];
-        if (isset($this->additionalFields['exception']) && $this->additionalFields['exception'] instanceof Throwable) {
+        if (isset($this->context['exception']) && $this->context['exception'] instanceof Throwable) {
             $e = $this->additionalFields['exception'];
             $data['exception_class'] = get_class($e);
             $data['exception_message'] = $e->getMessage();
             $data['exception_line'] = sprintf('%s:%s', $e->getFile(), $e->getLine());
             $data['exception_trace'] = $e->getTraceAsString();
             unset($this->context['exception']);
+        }
+        $keys = array_keys($data);
+        foreach ($keys as $key) {
+            if (isset($this->context[$key])) {
+                $data[$key] = $this->context[$key];
+                unset($this->context[$key]);
+            }
         }
 
         $this->additionalFields = array_merge($data, $this->additionalFields);

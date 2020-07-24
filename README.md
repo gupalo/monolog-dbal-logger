@@ -41,11 +41,15 @@ Configuration example:
 
 `services.yaml`
 
-    db_logger:
+    Gupalo\MonologDbalLogger\Symfony\ErrorLogListener:
+        tags: [ {name: 'kernel.event_subscriber'} ]
+
+    monolog.dbal_handler:
         class: 'Gupalo\MonologDbalLogger\MonologDbalLogger'
         public: true
         bind:
             $connection: '@doctrine.dbal.default_connection'
+            $level: 200
         tags: ['monolog.logger']
 
 `monolog.yaml`
@@ -54,8 +58,7 @@ Configuration example:
         handlers:
             db:
                 type: service
-                id: 'db_logger' # note - no "@"
-                level: debug
+                id: 'monolog.dbal_handler' # note - no "@"
                 channels: ["!event", "!request", "!security"]
 
 Configure
