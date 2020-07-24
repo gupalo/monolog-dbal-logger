@@ -86,9 +86,9 @@ class ErrorLogListener implements EventSubscriberInterface
         $command = $event->getCommand();
         $exception = $event->getError();
 
-        self::logException($this->logger, 'console.exception', $exception, [
-            'cmd' => $command ? $command->getName() : '',
-        ]);
+        $context = $this->getCommandEndContext($command);
+
+        self::logException($this->logger, 'console.exception', $exception, $context);
     }
 
     public function onConsoleTerminate(ConsoleTerminateEvent $event): void
@@ -96,15 +96,7 @@ class ErrorLogListener implements EventSubscriberInterface
         $statusCode = $event->getExitCode();
         $command = $event->getCommand();
 
-        $context = [];
-        if ($command) {
-            $context['cmd'] = $command->getName();
-            if (self::$timeCommandBegin && $command->getName() === self::$activeCommandName) {
-                $context['time'] = round(microtime(true) - self::$timeCommandBegin, 6);
-            }
-        }
-        self::$activeCommandName = null;
-        self::$timeCommandBegin = null;
+        $context = $this->getCommandEndContext($command);
 
         try {
             if ($statusCode === 0 || $statusCode === 200 || !$command) {
@@ -209,5 +201,20 @@ class ErrorLogListener implements EventSubscriberInterface
             ErrorHandler::register($this->logger);
             $isRegistered = true;
         }
+    }
+
+    protected function getCommandEndContext(?Command $command): array
+    {
+        $context = [];
+        if ($command) {
+            $context['cmd'] = $command->getName();
+            if (self::$timeCommandBegin && $command->getName() === self::$activeCommandName) {
+                $context['time'] = round(microtime(true) - self::$timeCommandBegin, 6);
+            }
+        }
+        self::$activeCommandName = null;
+        self::$timeCommandBegin = null;
+
+        return $context;
     }
 }

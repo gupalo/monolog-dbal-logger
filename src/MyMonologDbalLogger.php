@@ -18,9 +18,33 @@ class MyMonologDbalLogger extends MonologDbalLogger
     {
         parent::initContextAndAdditionalFields();
 
-        $this->fixCmd();
-        $this->initException();
-        $this->initAdditionalFields();
+        $this->tryFixCmd();
+        $this->tryInitException();
+        $this->tryInitAdditionalFields();
+    }
+
+    protected function tryFixCmd(): void
+    {
+        try {
+            $this->fixCmd();
+        } catch (Throwable $e) {
+        }
+    }
+
+    protected function tryInitException(): void
+    {
+        try {
+            $this->initException();
+        } catch (Throwable $e) {
+        }
+    }
+
+    protected function tryInitAdditionalFields(): void
+    {
+        try {
+            $this->initAdditionalFields();
+        } catch (Throwable $e) {
+        }
     }
 
     protected function getAdditionalData(): array
@@ -50,7 +74,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
     {
         $data = ['exception_class' => null, 'exception_message' => null, 'exception_line' => null, 'exception_trace' => null];
         if (isset($this->context['exception']) && $this->context['exception'] instanceof Throwable) {
-            $e = $this->additionalFields['exception'];
+            $e = $this->context['exception'];
             $data['exception_class'] = get_class($e);
             $data['exception_message'] = $e->getMessage();
             $data['exception_line'] = sprintf('%s:%s', $e->getFile(), $e->getLine());
