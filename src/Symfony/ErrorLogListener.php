@@ -86,7 +86,10 @@ class ErrorLogListener implements EventSubscriberInterface
         $command = $event->getCommand();
         $exception = $event->getError();
 
-        $context = $this->getCommandEndContext($command);
+        $context = [];
+        if ($command) {
+            $context['cmd'] = $command->getName();
+        }
 
         self::logException($this->logger, 'console.exception', $exception, $context);
     }
