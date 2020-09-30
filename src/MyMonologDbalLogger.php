@@ -7,8 +7,16 @@ use Throwable;
 
 class MyMonologDbalLogger extends MonologDbalLogger
 {
+    private static array $skipMessages = [
+        'User Deprecated: The "Doctrine\\Common\\Inflector\\Inflector::classify" method is deprecated and will be dropped in doctrine/inflector 2.0. Please update to the new Inflector API.',
+    ];
+
     protected function needSkip(): bool
     {
+        if (in_array($this->record['message'] ?? '', self::$skipMessages, true)) {
+            return true;
+        }
+
         $e = $this->record['context']['exception'] ?? null;
 
         return ($e && $e instanceof ErrorException && $e->getSeverity() === E_USER_DEPRECATED);
