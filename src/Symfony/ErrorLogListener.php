@@ -22,7 +22,7 @@ class ErrorLogListener implements EventSubscriberInterface
 
     private static ?string $activeCommandName = null;
 
-    private static ?int $timeCommandBegin = null;
+    private static ?float $timeCommandBegin = null;
 
     public function __construct(LoggerInterface $logger)
     {
