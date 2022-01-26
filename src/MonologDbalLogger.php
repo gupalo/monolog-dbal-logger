@@ -18,11 +18,11 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected string $table;
 
-    protected array $record;
+    protected array $record = [];
 
-    protected array $context;
+    protected array $context = [];
 
-    protected array $additionalFields;
+    protected array $additionalFields = [];
 
     public function __construct(
         Connection $connection,
