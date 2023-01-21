@@ -4,8 +4,9 @@ namespace Gupalo\MonologDbalLogger;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
-use Monolog\Logger;
+use Monolog\Level;
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\LogRecord;
 use Throwable;
 
 class MonologDbalLogger extends AbstractProcessingHandler
@@ -18,7 +19,7 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected string $table;
 
-    protected array $record;
+    protected LogRecord $record;
 
     protected array $context;
 
@@ -28,7 +29,7 @@ class MonologDbalLogger extends AbstractProcessingHandler
         Connection $connection,
         string $table = '_log',
         int $maxRows = 100000,
-        $level = Logger::DEBUG,
+        $level = Level::Debug,
         $bubble = true,
         MonologDbalCleaner $cleaner = null
     ) {
@@ -43,10 +44,9 @@ class MonologDbalLogger extends AbstractProcessingHandler
     /**
      * Writes the record down to the log of the implementing handler
      *
-     * @param  $record []
      * @return void
      */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
         $this->record = $record;
 
@@ -68,7 +68,7 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected function initContextAndAdditionalFields(): void
     {
-        $this->context = array_merge($this->record['context'] ?? [], $this->record['extra'] ?? []);
+        $this->context = array_merge($this->record->context, $this->record->extra);
         $this->additionalFields = [];
     }
 
@@ -80,11 +80,11 @@ class MonologDbalLogger extends AbstractProcessingHandler
     protected function getDefaultData(): array
     {
         return [
-            'created_at' => $this->record['datetime']->format('Y-m-d H:i:s'),
-            'level' => $this->record['level'],
-            'level_name' => $this->normalizeLevelName($this->record['level_name']),
-            'channel' => $this->leftNull($this->record['channel'] ?? null, 255),
-            'message' => $this->leftNull($this->record['message'] ?? null, 1024),
+            'created_at' => $this->record->datetime->format('Y-m-d H:i:s'),
+            'level' => $this->record->level->value,
+            'level_name' => $this->normalizeLevelName($this->record->level->name),
+            'channel' => $this->leftNull($this->record->channel, 255),
+            'message' => $this->leftNull($this->record->message ?? null, 1024),
             'context' => $this->serializeArrayNull($this->context),
         ];
     }
