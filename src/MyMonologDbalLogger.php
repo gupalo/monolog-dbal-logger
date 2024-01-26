@@ -13,13 +13,13 @@ class MyMonologDbalLogger extends MonologDbalLogger
 
     protected function needSkip(): bool
     {
-        if (in_array($this->record['message'] ?? '', self::$skipMessages, true)) {
+        if (in_array($this->record->message ?? '', self::$skipMessages, true)) {
             return true;
         }
 
-        $e = $this->record['context']['exception'] ?? null;
+        $e = $this->record->context['exception'] ?? null;
 
-        return ($e && $e instanceof ErrorException && $e->getSeverity() === E_USER_DEPRECATED);
+        return ($e instanceof ErrorException && $e->getSeverity() === E_USER_DEPRECATED);
     }
 
     protected function initContextAndAdditionalFields(): void
@@ -72,7 +72,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
 
     protected function fixCmd(): void
     {
-        if (($this->record['message'] ?? '') === 'cmd' && empty($this->context['cmd']) && !empty($this->context['name'])) {
+        if (($this->record->message ?? '') === 'cmd' && empty($this->context['cmd']) && !empty($this->context['name'])) {
             $this->additionalFields['cmd'] = $this->context['name'];
             unset($this->context['name']);
         }

@@ -65,8 +65,8 @@ class MonologDbalCleaner
             ->setFirstResult($this->maxRows)
             ->setMaxResults(1)
             ->orderBy('id', 'DESC')
-            ->execute()
-            ->fetchColumn(0);
+            ->executeQuery()
+            ->fetchOne();
     }
 
     protected function deleteWhereIdLessThan($maxId): void
@@ -76,7 +76,7 @@ class MonologDbalCleaner
                 ->delete($this->table)
                 ->andWhere('id < :max_id')
                 ->setParameter('max_id', $maxId)
-                ->execute();
+                ->executeStatement();
         }
     }
 }

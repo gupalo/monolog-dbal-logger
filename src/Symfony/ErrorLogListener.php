@@ -150,8 +150,8 @@ class ErrorLogListener implements EventSubscriberInterface
         }
         $result = substr($data, 0, 10000);
 
-        if (strpos($result, '@') !== false) {
-            if (strpos($result, '://') !== false) {
+        if (str_contains($result, '@')) {
+            if (str_contains($result, '://')) {
                 $result = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $result);
             }
             $result = preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $result);
