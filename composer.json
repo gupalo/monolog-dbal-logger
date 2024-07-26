@@ -7,7 +7,7 @@
         "php": ">=8.1",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "doctrine/dbal": "^3.8",
+        "doctrine/dbal": "^3.8|^4.0",
         "monolog/monolog": "^3.5",
         "symfony/console": "^5.4|^6.0|^7.0",
         "symfony/event-dispatcher": "^5.4|^6.0|^7.0",
