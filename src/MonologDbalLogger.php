@@ -20,9 +20,9 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected LogRecord $record;
 
-    protected array $context;
+    protected array $context = [];
 
-    protected array $additionalFields;
+    protected array $additionalFields = [];
 
     public function __construct(
         Connection $connection,
@@ -135,11 +135,11 @@ class MonologDbalLogger extends AbstractProcessingHandler
 
     protected function intNull(?int $v): ?int
     {
-        return ($v !== null) ? (int)$v : null;
+        return $v;
     }
 
     protected function floatNull(?float $v): ?float
     {
-        return ($v !== null) ? (float)$v : null;
+        return $v;
     }
 }

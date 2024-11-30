@@ -77,7 +77,7 @@ class ErrorLogListener implements EventSubscriberInterface
         $context = $this->getCommandContext($command, $input);
         try {
             $this->logger->info('console.begin', $context);
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
@@ -109,7 +109,7 @@ class ErrorLogListener implements EventSubscriberInterface
             }
 
             $this->logger->warning('console.error', array_merge($context, ['code' => $statusCode]));
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
@@ -124,7 +124,7 @@ class ErrorLogListener implements EventSubscriberInterface
         } catch (Throwable $e) {
             try {
                 $logger->error($name, ['exception_message' => $e->getMessage()]);
-            } catch (Throwable $e) {
+            } catch (Throwable) {
             }
         }
     }
@@ -144,7 +144,7 @@ class ErrorLogListener implements EventSubscriberInterface
         if (!is_string($data)) {
             try {
                 $data = json_encode($data, JSON_THROW_ON_ERROR, 10);
-            } catch (Throwable $e) {
+            } catch (Throwable) {
                 $data = (string)$data;
             }
         }
@@ -177,7 +177,6 @@ class ErrorLogListener implements EventSubscriberInterface
                 $options['no-interaction'],
                 $options['env'],
                 $options['no-debug'],
-                $options['env']
             );
             $arguments = $input->getArguments();
             unset($arguments['command']);
@@ -190,7 +189,7 @@ class ErrorLogListener implements EventSubscriberInterface
 
                 return $context;
             }
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             $context = [];
         }
 

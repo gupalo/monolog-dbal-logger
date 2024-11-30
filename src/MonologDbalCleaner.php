@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection PhpDqlBuilderUnknownModelInspection */
 
 namespace Gupalo\MonologDbalLogger;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Throwable;
 
 class MonologDbalCleaner
@@ -18,7 +19,7 @@ class MonologDbalCleaner
     public function __construct(
         Connection $connection,
         string $table = '_log',
-        int $maxRows = 100000
+        int $maxRows = 100000,
     ) {
         $this->connection = $connection;
         $this->table = $table;
@@ -42,8 +43,8 @@ class MonologDbalCleaner
         $time = time();
 
         return (
-            $time - $this->lastTimeCleaned >= 60 &&
-            $time % 1000 === 0
+            $time - $this->lastTimeCleaned >= 3600 &&
+            ((int) round(microtime(true) * 1000)) % 1000 === 0
         );
     }
 
@@ -53,10 +54,11 @@ class MonologDbalCleaner
         try {
             $maxId = $this->getMaxId();
             $this->deleteWhereIdLessThan($maxId);
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
+    /** @throws Exception */
     protected function getMaxId(): int
     {
         return (int)$this->connection->createQueryBuilder()
@@ -69,6 +71,7 @@ class MonologDbalCleaner
             ->fetchOne();
     }
 
+    /** @throws Exception */
     protected function deleteWhereIdLessThan($maxId): void
     {
         if ($maxId > 0) {

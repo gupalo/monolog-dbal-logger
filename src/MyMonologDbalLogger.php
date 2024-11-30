@@ -35,7 +35,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
     {
         try {
             $this->fixCmd();
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
@@ -43,7 +43,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
     {
         try {
             $this->initException();
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
@@ -51,7 +51,7 @@ class MyMonologDbalLogger extends MonologDbalLogger
     {
         try {
             $this->initAdditionalFields();
-        } catch (Throwable $e) {
+        } catch (Throwable) {
         }
     }
 
