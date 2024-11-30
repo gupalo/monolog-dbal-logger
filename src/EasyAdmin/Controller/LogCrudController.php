@@ -14,10 +14,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Helpers\CrudField;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\CrudControllerTrait;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\ReadOnlyCrudControllerTrait;
+use Gupalo\MonologDbalLogger\EasyAdmin\Field\YamlField;
 use Gupalo\MonologDbalLogger\Entity\Log;
-use MarcinJozwikowski\EasyAdminPrettyUrls\Attribute\PrettyRoutesController;
 
-#[PrettyRoutesController(path: 'log')]
 class LogCrudController extends AbstractCrudController
 {
     use CrudControllerTrait;

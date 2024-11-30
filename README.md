@@ -101,7 +101,31 @@ Table:
 EasyAdmin
 ---------
 
+Add to menu
+
     yield MenuItem::linkToCrud('Log', 'fa-solid fa-file-waveform', Log::class);
+
+Add to `config/packages/doctrine.yaml`
+
+    doctrine:
+        orm:
+            mappings:
+                # ...here is "App", add below
+                Gupalo:
+                    is_bundle: false
+                    dir: '%kernel.project_dir%/vendor/gupalo/monolog-dbal-logger/src/Entity'
+                    prefix: 'Gupalo\MonologDbalLogger\Entity'
+                    alias: Gupalo
+
+Create controller. Override if needed
+
+    use MarcinJozwikowski\EasyAdminPrettyUrls\Attribute\PrettyRoutesController;
+
+    #[PrettyRoutesController(path: 'log')]
+    class LogCrudController extends \Gupalo\MonologDbalLogger\EasyAdmin\Controller\LogCrudController
+    {
+    }
+
 
 
 Other
