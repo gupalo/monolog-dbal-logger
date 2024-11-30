@@ -73,7 +73,7 @@ Extend
 ------
 
 You may extend `MonologDbalLogger` and add your own logic. See `MyMonologDbalLogger` as an example.
-If you add additional fields, don't forget to change table creation SQL.
+If you add additional fields, remember to change table creation SQL.
 
 Table:
 
@@ -97,6 +97,12 @@ Table:
         PRIMARY KEY (`id`),
         INDEX `log_created_at_level` (`created_at`, `level`) USING BTREE
     ) DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+EasyAdmin
+---------
+
+    yield MenuItem::linkToCrud('Log', 'fa-solid fa-file-waveform', Log::class);
+
 
 Other
 -----
