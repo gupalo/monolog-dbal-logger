@@ -126,7 +126,11 @@ Create controller. Override if needed
     {
     }
 
+Add to `config/services.yaml`
 
+    services:
+        Gupalo\MonologDbalLogger\Repository\LogRepository:
+            tags: [ 'doctrine.repository_service' ]
 
 Other
 -----
