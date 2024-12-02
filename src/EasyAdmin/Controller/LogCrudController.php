@@ -37,6 +37,7 @@ class LogCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return parent::configureFilters($filters)
+            ->add('id')
             ->add('message')
             ->add('level')
             ->add('context')
