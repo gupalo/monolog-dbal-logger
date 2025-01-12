@@ -119,9 +119,6 @@ Add to `config/packages/doctrine.yaml`
 
 Create controller. Override if needed
 
-    use MarcinJozwikowski\EasyAdminPrettyUrls\Attribute\PrettyRoutesController;
-
-    #[PrettyRoutesController(path: 'log')]
     class LogCrudController extends \Gupalo\MonologDbalLogger\EasyAdmin\Controller\LogCrudController
     {
     }
