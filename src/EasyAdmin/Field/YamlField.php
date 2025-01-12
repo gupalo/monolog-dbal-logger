@@ -5,6 +5,7 @@ namespace Gupalo\MonologDbalLogger\EasyAdmin\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FieldTrait;
+use InvalidArgumentException;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 class YamlField implements FieldInterface
@@ -19,6 +20,7 @@ class YamlField implements FieldInterface
 
     /**
      * @param TranslatableInterface|string|false|null $label
+     * @noinspection PhpInternalEntityUsedInspection
      */
     public static function new(string $propertyName, $label = null): self
     {
@@ -41,7 +43,7 @@ class YamlField implements FieldInterface
     public function setNumOfRows(int $rows): self
     {
         if ($rows < 1) {
-            throw new \InvalidArgumentException(sprintf('The argument of the "%s()" method must be 1 or higher (%d given).', __METHOD__, $rows));
+            throw new InvalidArgumentException(sprintf('The argument of the "%s()" method must be 1 or higher (%d given).', __METHOD__, $rows));
         }
 
         $this->setCustomOption(self::OPTION_NUM_OF_ROWS, $rows);

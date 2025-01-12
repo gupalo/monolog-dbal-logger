@@ -30,7 +30,7 @@ class MonologDbalLogger extends AbstractProcessingHandler
         int $maxRows = 100000,
         $level = Level::Debug,
         $bubble = true,
-        MonologDbalCleaner $cleaner = null
+        ?MonologDbalCleaner $cleaner = null
     ) {
         $this->connection = $connection;
         $this->table = $table;

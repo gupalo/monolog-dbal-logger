@@ -2,6 +2,7 @@
 
 namespace Gupalo\MonologDbalLogger\Entity;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gupalo\MonologDbalLogger\Entity\Traits\VirtualFieldsEntityTrait;
@@ -20,7 +21,7 @@ class Log
     private ?int $id = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $levelName = '';
@@ -69,7 +70,7 @@ class Log
         return $this->id;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
