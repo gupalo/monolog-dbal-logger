@@ -119,7 +119,7 @@ Add to `config/packages/doctrine.yaml`
 
 Create controller. Override if needed
 
-    class LogCrudController extends \Gupalo\MonologDbalLogger\EasyAdmin\Controller\BaseLogCrudController
+    class LogCrudController extends \Gupalo\MonologDbalLogger\EasyAdmin\Controller\LogCrudController
     {
     }
 
