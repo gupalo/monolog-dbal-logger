@@ -117,7 +117,7 @@ class ErrorLogListener implements EventSubscriberInterface
         LoggerInterface $logger,
         string $name,
         Throwable $exception,
-        array $context = null
+        ?array $context = null,
     ): void {
         try {
             $logger->error($name, self::formatExceptionContext($exception, $context));
@@ -129,7 +129,7 @@ class ErrorLogListener implements EventSubscriberInterface
         }
     }
 
-    public static function formatExceptionContext(Throwable $exception, array $context = null): array
+    public static function formatExceptionContext(Throwable $exception, ?array $context = null): array
     {
         return array_merge([
             'exception_class' => get_class($exception),
