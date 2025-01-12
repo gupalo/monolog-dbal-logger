@@ -17,7 +17,7 @@ use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\ReadOnlyCrudControllerT
 use Gupalo\MonologDbalLogger\EasyAdmin\Field\YamlField;
 use Gupalo\MonologDbalLogger\Entity\Log;
 
-class LogCrudController extends AbstractCrudController
+class BaseLogCrudController extends AbstractCrudController
 {
     use CrudControllerTrait;
     use ReadOnlyCrudControllerTrait;
