@@ -17,6 +17,7 @@ trait ReadOnlyCrudControllerTrait
     public function configureActions(Actions $actions): Actions
     {
         return parent::configureActions($actions)
+            ->add(Crud::PAGE_INDEX, Action::EDIT)
             ->add(Crud::PAGE_EDIT, Action::INDEX)
             ->disable(Action::DELETE, Action::NEW, Action::SAVE_AND_CONTINUE, Action::SAVE_AND_RETURN)
         ;
