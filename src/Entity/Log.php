@@ -5,7 +5,7 @@ namespace Gupalo\MonologDbalLogger\Entity;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Gupalo\MonologDbalLogger\Entity\Traits\VirtualFieldsEntityTrait;
+use Gupalo\MonologDbalLogger\Entity\Traits\DbalLoggerVirtualFieldsEntityTrait;
 use Gupalo\MonologDbalLogger\Repository\LogRepository;
 
 #[ORM\Entity(repositoryClass: LogRepository::class)]
@@ -13,7 +13,7 @@ use Gupalo\MonologDbalLogger\Repository\LogRepository;
 #[ORM\Index(fields: ['createdAt', 'level'])]
 class Log
 {
-    use VirtualFieldsEntityTrait;
+    use DbalLoggerVirtualFieldsEntityTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -14,7 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Helpers\DbalLoggerCrudField;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\DbalLoggerCrudControllerTrait;
 use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\DbalLoggerReadOnlyCrudControllerTrait;
-use Gupalo\MonologDbalLogger\EasyAdmin\Field\YamlField;
+use Gupalo\MonologDbalLogger\EasyAdmin\Field\DbalLoggerYamlField;
 use Gupalo\MonologDbalLogger\Entity\Log;
 
 class LogCrudController extends AbstractCrudController
@@ -67,7 +67,7 @@ class LogCrudController extends AbstractCrudController
         yield IntegerField::new('level')->setLabel('Level Code')->setColumns(3)->hideOnIndex();
         yield TextField::new('channel')->setLabel('Channel')->setColumns(3);
         yield TextField::new('message')->setColumns(12)->setMaxLength(70);
-        yield YamlField::new('context')->hideOnIndex()->setColumns(12);
+        yield DbalLoggerYamlField::new('context')->hideOnIndex()->setColumns(12);
 
         yield DbalLoggerCrudField::virtual('Fields', fn ($d, Log $v) => $this->formatFields($v));
         yield DbalLoggerCrudField::virtual('Context', fn ($d, Log $v) => $this->formatContext($v->getContext()));

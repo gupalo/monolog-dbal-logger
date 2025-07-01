@@ -2,7 +2,7 @@
 
 namespace Gupalo\MonologDbalLogger\Entity\Traits;
 
-trait VirtualFieldsEntityTrait
+trait DbalLoggerVirtualFieldsEntityTrait
 {
     public function virtual(): string
     {

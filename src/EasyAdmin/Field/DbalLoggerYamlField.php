@@ -8,7 +8,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\FieldTrait;
 use InvalidArgumentException;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
-class YamlField implements FieldInterface
+class DbalLoggerYamlField implements FieldInterface
 {
     use FieldTrait;
 
@@ -28,7 +28,7 @@ class YamlField implements FieldInterface
             ->setProperty($propertyName)
             ->setLabel($label)
             ->setTemplateName('crud/field/code_editor')
-            ->setFormType(YamlType::class)
+            ->setFormType(DbalLoggerYamlType::class)
             ->addCssClass('field-code_editor')
             ->addCssFiles(Asset::fromEasyAdminAssetPackage('field-code-editor.css')->onlyOnForms())
             ->addJsFiles(Asset::fromEasyAdminAssetPackage('field-code-editor.js')->onlyOnForms())

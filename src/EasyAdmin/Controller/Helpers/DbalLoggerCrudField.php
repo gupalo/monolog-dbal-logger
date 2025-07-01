@@ -8,7 +8,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use Gupalo\MonologDbalLogger\EasyAdmin\Field\YamlField;
+use Gupalo\MonologDbalLogger\EasyAdmin\Field\DbalLoggerYamlField;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Yaml\Yaml;
 
@@ -70,7 +70,7 @@ class DbalLoggerCrudField
         return $field;
     }
 
-    public static function yaml(string $property, int $cols = 12, int $rows = 10, bool $isIndex = false, int $inline = 2, string|int $maxWidth = 500): YamlField|TextField
+    public static function yaml(string $property, int $cols = 12, int $rows = 10, bool $isIndex = false, int $inline = 2, string|int $maxWidth = 500): DbalLoggerYamlField|TextField
     {
         if ($isIndex) {
             return self::virtual(
@@ -79,7 +79,7 @@ class DbalLoggerCrudField
             )->renderAsHtml()->setLabel(self::humanizeString($property));
         }
 
-        return YamlField::new($property)
+        return DbalLoggerYamlField::new($property)
             ->setColumns($cols)
             ->setNumOfRows($rows)
             ->setRequired(false);

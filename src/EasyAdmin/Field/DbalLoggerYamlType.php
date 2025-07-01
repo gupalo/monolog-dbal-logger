@@ -6,7 +6,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Type\CodeEditorType;
 use Gupalo\SymfonyFormTransformers\Transformer\JsonYamlTransformer;
 use Symfony\Component\Form\FormBuilderInterface;
 
-class YamlType extends CodeEditorType
+class DbalLoggerYamlType extends CodeEditorType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
