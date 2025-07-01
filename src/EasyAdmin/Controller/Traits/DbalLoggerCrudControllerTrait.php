@@ -6,7 +6,7 @@ namespace Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 
-trait CrudControllerTrait
+trait DbalLoggerCrudControllerTrait
 {
     protected function _configureCrud(Crud $crud): Crud
     {

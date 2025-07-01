@@ -11,16 +11,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
-use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Helpers\CrudField;
-use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\CrudControllerTrait;
-use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\ReadOnlyCrudControllerTrait;
+use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Helpers\DbalLoggerCrudField;
+use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\DbalLoggerCrudControllerTrait;
+use Gupalo\MonologDbalLogger\EasyAdmin\Controller\Traits\DbalLoggerReadOnlyCrudControllerTrait;
 use Gupalo\MonologDbalLogger\EasyAdmin\Field\YamlField;
 use Gupalo\MonologDbalLogger\Entity\Log;
 
 class LogCrudController extends AbstractCrudController
 {
-    use CrudControllerTrait;
-    use ReadOnlyCrudControllerTrait;
+    use DbalLoggerCrudControllerTrait;
+    use DbalLoggerReadOnlyCrudControllerTrait;
 
     public static function getEntityFqcn(): string
     {
@@ -59,9 +59,9 @@ class LogCrudController extends AbstractCrudController
     {
         $isIndex = (Crud::PAGE_INDEX === $pageName);
 
-        yield CrudField::panel('Message', 8);
+        yield DbalLoggerCrudField::panel('Message', 8);
         yield IdField::new('id')->hideOnForm();
-        yield CrudField::createdAt(3);
+        yield DbalLoggerCrudField::createdAt(3);
         yield TextField::new('levelName')->setLabel('Level')->setColumns(3)
             ->formatValue(fn (?string $level) => $this->formatLevel($level));
         yield IntegerField::new('level')->setLabel('Level Code')->setColumns(3)->hideOnIndex();
@@ -69,10 +69,10 @@ class LogCrudController extends AbstractCrudController
         yield TextField::new('message')->setColumns(12)->setMaxLength(70);
         yield YamlField::new('context')->hideOnIndex()->setColumns(12);
 
-        yield CrudField::virtual('Fields', fn ($d, Log $v) => $this->formatFields($v));
-        yield CrudField::virtual('Context', fn ($d, Log $v) => $this->formatContext($v->getContext()));
+        yield DbalLoggerCrudField::virtual('Fields', fn ($d, Log $v) => $this->formatFields($v));
+        yield DbalLoggerCrudField::virtual('Context', fn ($d, Log $v) => $this->formatContext($v->getContext()));
 
-        yield CrudField::panel('Fields', 4);
+        yield DbalLoggerCrudField::panel('Fields', 4);
         yield TextField::new('method')->setColumns(12)->hideOnIndex();
         yield TextField::new('cmd')->setColumns(6)->hideOnIndex();
         yield TextField::new('uid')->setColumns(6)->hideOnIndex();
@@ -80,7 +80,7 @@ class LogCrudController extends AbstractCrudController
         yield NumberField::new('time')->setColumns(6)->hideOnIndex();
 
 
-        yield CrudField::panel('Exception');
+        yield DbalLoggerCrudField::panel('Exception');
         yield TextField::new('exceptionMessage')->hideOnIndex()->setColumns(12);
         yield TextField::new('exceptionClass')->hideOnIndex()->setColumns(3);
         yield TextField::new('exceptionLine')->hideOnIndex()->setColumns(9);

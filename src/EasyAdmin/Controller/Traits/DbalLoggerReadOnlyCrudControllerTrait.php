@@ -12,7 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 /**
  * @method iterable<FieldInterface> doConfigureFields(string $pageName)
  */
-trait ReadOnlyCrudControllerTrait
+trait DbalLoggerReadOnlyCrudControllerTrait
 {
     public function configureActions(Actions $actions): Actions
     {

@@ -14,7 +14,7 @@ use Symfony\Component\Yaml\Yaml;
 
 use function Symfony\Component\String\u;
 
-class CrudField
+class DbalLoggerCrudField
 {
     public static bool $disabled = false;
 
