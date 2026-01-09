@@ -4,20 +4,21 @@
     "type": "library",
     "license": "MIT",
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.4",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "doctrine/dbal": "^3.8|^4.0",
-        "monolog/monolog": "^3.5",
-        "symfony/console": "^5.4|^6.0|^7.0",
-        "symfony/event-dispatcher": "^5.4|^6.0|^7.0",
-        "symfony/http-kernel": "^5.4|^6.0|^7.0"
+        "doctrine/dbal": "^4.4",
+        "monolog/monolog": "^3.10",
+        "symfony/console": "^7.4|^8.0",
+        "symfony/event-dispatcher": "^7.4|^8.0",
+        "symfony/http-kernel": "^7.4|^8.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.5",
-        "doctrine/orm": "^3.3",
-        "easycorp/easyadmin-bundle": "^4.18",
-        "gupalo/symfony-form-transformers": "^1.3"
+        "doctrine/orm": "^3.6",
+        "easycorp/easyadmin-bundle": "^4.27",
+        "gupalo/symfony-form-transformers": "^1.3",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
