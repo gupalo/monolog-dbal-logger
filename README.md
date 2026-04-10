@@ -67,7 +67,16 @@ Configure
 Params in `MonologDbalLogger::__construct`:
 
 * `string $table = '_log'`: table name 
-* `int $maxRows = 100000`: if you have more rows than `$maxRows` then cleaner will eventually (1 in 1000 chances) remove them
+* `int $maxRows = 100000`: if you have more rows than `$maxRows` then cleaner will eventually (1 in 100 chances) remove them
+
+Params in `MonologDbalCleaner::__construct`:
+
+* `string $table = '_log'`: table name
+* `int $maxRows = 100000`: keep at most this many rows (only deletes info-level rows, `level < 250`)
+* `int $infoRetentionDays = 1`: delete info logs (`level < 250`) older than this many days
+* `int $warningRetentionDays = 7`: delete warnings (`250 <= level < 400`) older than this many days
+* `int $errorRetentionDays = 30`: delete errors (`level >= 400`) older than this many days
+* Set any retention to `0` to disable that rule
 
 Extend
 ------

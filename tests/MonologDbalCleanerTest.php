@@ -23,21 +23,20 @@ class MonologDbalCleanerTest extends TestCase
         $selectQueryBuilder->method('orderBy')->with('id', 'DESC')->willReturnSelf();
         $selectQueryBuilder->method('executeQuery')->willReturn($result);
 
-        $deleteQueryBuilder = $this->createMock(QueryBuilder::class);
-        $deleteQueryBuilder->method('delete')->with('_log')->willReturnSelf();
-        $deleteQueryBuilder->method('andWhere')->with('id < :max_id')->willReturnSelf();
-        $deleteQueryBuilder->method('setParameter')->with('max_id', 12345)->willReturnSelf();
+        $deleteQueryBuilder = $this->createDeleteQueryBuilder();
         $deleteQueryBuilder->expects($this->once())->method('executeStatement');
+
+        $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3);
 
         $connection = $this->createMock(Connection::class);
         $connection->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder);
+            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder, ...$ageDeleteBuilders);
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
         $cleaner->cleanup(force: true);
     }
 
-    public function testCleanupForceWithZeroMaxIdDoesNotDelete(): void
+    public function testCleanupForceWithZeroMaxIdDoesNotDeleteByMaxRows(): void
     {
         $result = $this->createMock(Result::class);
         $result->method('fetchOne')->willReturn(0);
@@ -50,8 +49,12 @@ class MonologDbalCleanerTest extends TestCase
         $selectQueryBuilder->method('orderBy')->willReturnSelf();
         $selectQueryBuilder->method('executeQuery')->willReturn($result);
 
+        // 3 age-based deletes still run
+        $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3);
+
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->once())->method('createQueryBuilder')->willReturn($selectQueryBuilder);
+        $connection->method('createQueryBuilder')
+            ->willReturnOnConsecutiveCalls($selectQueryBuilder, ...$ageDeleteBuilders);
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
         $cleaner->cleanup(force: true);
@@ -85,15 +88,12 @@ class MonologDbalCleanerTest extends TestCase
         $selectQueryBuilder->method('orderBy')->willReturnSelf();
         $selectQueryBuilder->method('executeQuery')->willReturn($result);
 
-        $deleteQueryBuilder = $this->createMock(QueryBuilder::class);
-        $deleteQueryBuilder->method('delete')->with('custom_table')->willReturnSelf();
-        $deleteQueryBuilder->method('andWhere')->willReturnSelf();
-        $deleteQueryBuilder->method('setParameter')->willReturnSelf();
-        $deleteQueryBuilder->method('executeStatement');
+        $deleteQueryBuilder = $this->createDeleteQueryBuilder('custom_table');
+        $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3, 'custom_table');
 
         $connection = $this->createMock(Connection::class);
         $connection->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder);
+            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder, ...$ageDeleteBuilders);
 
         $cleaner = new MonologDbalCleaner($connection, 'custom_table', 500);
         $cleaner->cleanup(force: true);
@@ -132,11 +132,61 @@ class MonologDbalCleanerTest extends TestCase
         $selectQueryBuilder->method('orderBy')->willReturnSelf();
         $selectQueryBuilder->method('executeQuery')->willReturn($result);
 
+        $ageDeleteBuilder = $this->createDeleteQueryBuilder();
+
         $connection = $this->createMock(Connection::class);
-        $connection->expects($this->exactly(2))->method('createQueryBuilder')->willReturn($selectQueryBuilder);
+        // 2 runs: each has 1 select + 3 age deletes = 8 total
+        $connection->expects($this->exactly(8))->method('createQueryBuilder')
+            ->willReturn($selectQueryBuilder, $ageDeleteBuilder, $ageDeleteBuilder, $ageDeleteBuilder, $selectQueryBuilder, $ageDeleteBuilder, $ageDeleteBuilder, $ageDeleteBuilder);
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
         $cleaner->cleanup(force: true);
         $cleaner->cleanup(force: true);
+    }
+
+    public function testCleanupWithDisabledRetention(): void
+    {
+        $result = $this->createMock(Result::class);
+        $result->method('fetchOne')->willReturn(500);
+
+        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
+        $selectQueryBuilder->method('from')->willReturnSelf();
+        $selectQueryBuilder->method('select')->willReturnSelf();
+        $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
+        $selectQueryBuilder->method('setMaxResults')->willReturnSelf();
+        $selectQueryBuilder->method('orderBy')->willReturnSelf();
+        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+
+        $deleteQueryBuilder = $this->createDeleteQueryBuilder();
+
+        $connection = $this->createMock(Connection::class);
+        // select + maxRows delete only, no age-based deletes
+        $connection->expects($this->exactly(2))->method('createQueryBuilder')
+            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder);
+
+        $cleaner = new MonologDbalCleaner($connection, '_log', 1000, infoRetentionDays: 0, warningRetentionDays: 0, errorRetentionDays: 0);
+        $cleaner->cleanup(force: true);
+    }
+
+    private function createDeleteQueryBuilder(string $table = '_log'): QueryBuilder
+    {
+        $qb = $this->createMock(QueryBuilder::class);
+        $qb->method('delete')->with($table)->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('setParameter')->willReturnSelf();
+        $qb->method('executeStatement');
+
+        return $qb;
+    }
+
+    /** @return QueryBuilder[] */
+    private function createAgeDeleteQueryBuilders(int $count, string $table = '_log'): array
+    {
+        $builders = [];
+        for ($i = 0; $i < $count; $i++) {
+            $builders[] = $this->createDeleteQueryBuilder($table);
+        }
+
+        return $builders;
     }
 }
