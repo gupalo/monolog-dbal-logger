@@ -58,7 +58,7 @@ class ErrorLogListenerTest extends TestCase
         $request = Request::create('http://localhost/test', 'GET');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
 
-        $kernel = $this->createMock(HttpKernelInterface::class);
+        $kernel = $this->createStub(HttpKernelInterface::class);
         $event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new Exception('Test error'));
 
         $listener->onKernelException($event);
@@ -76,14 +76,14 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
+        $input = $this->createStub(InputInterface::class);
         $input->method('getOptions')->willReturn([]);
         $input->method('getArguments')->willReturn(['command' => 'app:test']);
 
-        $output = $this->createMock(OutputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleCommandEvent($command, $input, $output);
 
@@ -100,8 +100,8 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleCommandEvent(null, $input, $output);
 
@@ -121,10 +121,10 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
+        $input = $this->createStub(InputInterface::class);
         $input->method('getOptions')->willReturn([
             'help' => false,
             'quiet' => false,
@@ -132,7 +132,7 @@ class ErrorLogListenerTest extends TestCase
         ]);
         $input->method('getArguments')->willReturn(['command' => 'app:test']);
 
-        $output = $this->createMock(OutputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleCommandEvent($command, $input, $output);
 
@@ -152,17 +152,17 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
+        $input = $this->createStub(InputInterface::class);
         $input->method('getOptions')->willReturn([]);
         $input->method('getArguments')->willReturn([
             'command' => 'app:test',
             'name' => 'test-arg',
         ]);
 
-        $output = $this->createMock(OutputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleCommandEvent($command, $input, $output);
 
@@ -182,11 +182,11 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:failing');
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleErrorEvent($input, $output, new Exception('Command failed'), $command);
 
@@ -204,8 +204,8 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleErrorEvent($input, $output, new Exception('Error'));
 
@@ -223,11 +223,11 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleTerminateEvent($command, $input, $output, 0);
 
@@ -243,11 +243,11 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleTerminateEvent($command, $input, $output, 200);
 
@@ -266,11 +266,11 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleTerminateEvent($command, $input, $output, 1);
 
@@ -296,11 +296,11 @@ class ErrorLogListenerTest extends TestCase
         $timeCommandBegin = $reflection->getProperty('timeCommandBegin');
         $timeCommandBegin->setValue(null, microtime(true));
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:other');
 
-        $input = $this->createMock(InputInterface::class);
-        $output = $this->createMock(OutputInterface::class);
+        $input = $this->createStub(InputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         $event = new ConsoleTerminateEvent($command, $input, $output, 1);
 
@@ -324,14 +324,14 @@ class ErrorLogListenerTest extends TestCase
 
         $listener = new ErrorLogListener($logger);
 
-        $command = $this->createMock(Command::class);
+        $command = $this->createStub(Command::class);
         $command->method('getName')->willReturn('app:test');
 
-        $input = $this->createMock(InputInterface::class);
+        $input = $this->createStub(InputInterface::class);
         $input->method('getOptions')->willReturn([]);
         $input->method('getArguments')->willReturn(['command' => 'app:test']);
 
-        $output = $this->createMock(OutputInterface::class);
+        $output = $this->createStub(OutputInterface::class);
 
         // Start command
         $commandEvent = new ConsoleCommandEvent($command, $input, $output);

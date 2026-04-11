@@ -17,7 +17,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleWithAdditionalFields(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -51,7 +51,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleWithException(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $exception = new Exception('Test exception message');
 
@@ -80,7 +80,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleSkipsDeprecatedMessage(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->never())->method('insert');
 
@@ -99,7 +99,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleSkipsUserDeprecatedException(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->never())->method('insert');
 
@@ -121,7 +121,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleDoesNotSkipRegularErrorException(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())->method('insert');
 
@@ -143,7 +143,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleWithCmdInContext(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -167,7 +167,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleWithExceptionFieldsInContext(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -195,7 +195,7 @@ class MyMonologDbalLoggerTest extends TestCase
     public function testHandleRemovesAdditionalFieldsFromContext(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')

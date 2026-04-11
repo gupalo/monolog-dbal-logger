@@ -45,7 +45,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleWithCustomTable(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -86,7 +86,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleEmptyContext(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -110,7 +110,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleLongMessage(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $longMessage = str_repeat('a', 2000);
 
@@ -135,7 +135,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleNormalizesLevelName(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -158,7 +158,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleWithExtraData(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')
@@ -184,7 +184,7 @@ class MonologDbalLoggerTest extends TestCase
     public function testHandleSilentlyFailsOnInsertException(): void
     {
         $connection = $this->createMock(Connection::class);
-        $cleaner = $this->createMock(MonologDbalCleaner::class);
+        $cleaner = $this->createStub(MonologDbalCleaner::class);
 
         $connection->expects($this->once())
             ->method('insert')

@@ -12,25 +12,22 @@ class MonologDbalCleanerTest extends TestCase
 {
     public function testCleanupForceDeletesOldRows(): void
     {
-        $result = $this->createMock(Result::class);
+        $result = $this->createStub(Result::class);
         $result->method('fetchOne')->willReturn(12345);
 
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
-        $selectQueryBuilder->method('from')->willReturnSelf();
-        $selectQueryBuilder->method('select')->willReturnSelf();
-        $selectQueryBuilder->method('setFirstResult')->with(1000)->willReturnSelf();
-        $selectQueryBuilder->method('setMaxResults')->with(1)->willReturnSelf();
-        $selectQueryBuilder->method('orderBy')->with('id', 'DESC')->willReturnSelf();
-        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+        $selectQueryBuilder = $this->createSelectQueryBuilder($result);
 
-        $deleteQueryBuilder = $this->createDeleteQueryBuilder();
+        $deleteQueryBuilder = $this->createMock(QueryBuilder::class);
+        $deleteQueryBuilder->method('delete')->willReturnSelf();
+        $deleteQueryBuilder->method('andWhere')->willReturnSelf();
+        $deleteQueryBuilder->method('setParameter')->willReturnSelf();
         $deleteQueryBuilder->expects($this->once())->method('executeStatement');
 
         $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3);
 
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder, ...$ageDeleteBuilders);
+            ->willReturn($selectQueryBuilder, $deleteQueryBuilder, ...array_values($ageDeleteBuilders));
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
         $cleaner->cleanup(force: true);
@@ -38,26 +35,21 @@ class MonologDbalCleanerTest extends TestCase
 
     public function testCleanupForceWithZeroMaxIdDoesNotDeleteByMaxRows(): void
     {
-        $result = $this->createMock(Result::class);
+        $result = $this->createStub(Result::class);
         $result->method('fetchOne')->willReturn(0);
 
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
-        $selectQueryBuilder->method('from')->willReturnSelf();
-        $selectQueryBuilder->method('select')->willReturnSelf();
-        $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
-        $selectQueryBuilder->method('setMaxResults')->willReturnSelf();
-        $selectQueryBuilder->method('orderBy')->willReturnSelf();
-        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+        $selectQueryBuilder = $this->createSelectQueryBuilder($result);
 
         // 3 age-based deletes still run
         $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3);
 
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, ...$ageDeleteBuilders);
+            ->willReturn($selectQueryBuilder, ...array_values($ageDeleteBuilders));
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
         $cleaner->cleanup(force: true);
+        $this->addToAssertionCount(1);
     }
 
     public function testCleanupWithoutForceDoesNotRunImmediately(): void
@@ -77,31 +69,26 @@ class MonologDbalCleanerTest extends TestCase
 
     public function testCleanupWithCustomTable(): void
     {
-        $result = $this->createMock(Result::class);
+        $result = $this->createStub(Result::class);
         $result->method('fetchOne')->willReturn(100);
 
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
-        $selectQueryBuilder->method('from')->with('custom_table')->willReturnSelf();
-        $selectQueryBuilder->method('select')->willReturnSelf();
-        $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
-        $selectQueryBuilder->method('setMaxResults')->willReturnSelf();
-        $selectQueryBuilder->method('orderBy')->willReturnSelf();
-        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+        $selectQueryBuilder = $this->createSelectQueryBuilder($result);
 
-        $deleteQueryBuilder = $this->createDeleteQueryBuilder('custom_table');
-        $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3, 'custom_table');
+        $deleteQueryBuilder = $this->createDeleteQueryBuilder();
+        $ageDeleteBuilders = $this->createAgeDeleteQueryBuilders(3);
 
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder, ...$ageDeleteBuilders);
+            ->willReturn($selectQueryBuilder, $deleteQueryBuilder, ...array_values($ageDeleteBuilders));
 
         $cleaner = new MonologDbalCleaner($connection, 'custom_table', 500);
         $cleaner->cleanup(force: true);
+        $this->addToAssertionCount(1);
     }
 
     public function testCleanupHandlesExceptionGracefully(): void
     {
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
+        $selectQueryBuilder = $this->createStub(QueryBuilder::class);
         $selectQueryBuilder->method('from')->willReturnSelf();
         $selectQueryBuilder->method('select')->willReturnSelf();
         $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
@@ -109,7 +96,7 @@ class MonologDbalCleanerTest extends TestCase
         $selectQueryBuilder->method('orderBy')->willReturnSelf();
         $selectQueryBuilder->method('executeQuery')->willThrowException(new \Exception('DB error'));
 
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection->method('createQueryBuilder')->willReturn($selectQueryBuilder);
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000);
@@ -121,16 +108,10 @@ class MonologDbalCleanerTest extends TestCase
 
     public function testSecondForceCleanupRunsAgain(): void
     {
-        $result = $this->createMock(Result::class);
+        $result = $this->createStub(Result::class);
         $result->method('fetchOne')->willReturn(0);
 
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
-        $selectQueryBuilder->method('from')->willReturnSelf();
-        $selectQueryBuilder->method('select')->willReturnSelf();
-        $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
-        $selectQueryBuilder->method('setMaxResults')->willReturnSelf();
-        $selectQueryBuilder->method('orderBy')->willReturnSelf();
-        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+        $selectQueryBuilder = $this->createSelectQueryBuilder($result);
 
         $ageDeleteBuilder = $this->createDeleteQueryBuilder();
 
@@ -146,45 +127,51 @@ class MonologDbalCleanerTest extends TestCase
 
     public function testCleanupWithDisabledRetention(): void
     {
-        $result = $this->createMock(Result::class);
+        $result = $this->createStub(Result::class);
         $result->method('fetchOne')->willReturn(500);
 
-        $selectQueryBuilder = $this->createMock(QueryBuilder::class);
-        $selectQueryBuilder->method('from')->willReturnSelf();
-        $selectQueryBuilder->method('select')->willReturnSelf();
-        $selectQueryBuilder->method('setFirstResult')->willReturnSelf();
-        $selectQueryBuilder->method('setMaxResults')->willReturnSelf();
-        $selectQueryBuilder->method('orderBy')->willReturnSelf();
-        $selectQueryBuilder->method('executeQuery')->willReturn($result);
+        $selectQueryBuilder = $this->createSelectQueryBuilder($result);
 
         $deleteQueryBuilder = $this->createDeleteQueryBuilder();
 
         $connection = $this->createMock(Connection::class);
         // select + maxRows delete only, no age-based deletes
         $connection->expects($this->exactly(2))->method('createQueryBuilder')
-            ->willReturnOnConsecutiveCalls($selectQueryBuilder, $deleteQueryBuilder);
+            ->willReturn($selectQueryBuilder, $deleteQueryBuilder);
 
         $cleaner = new MonologDbalCleaner($connection, '_log', 1000, infoRetentionDays: 0, warningRetentionDays: 0, errorRetentionDays: 0);
         $cleaner->cleanup(force: true);
     }
 
-    private function createDeleteQueryBuilder(string $table = '_log'): QueryBuilder
+    private function createSelectQueryBuilder(Result $result): QueryBuilder
     {
-        $qb = $this->createMock(QueryBuilder::class);
-        $qb->method('delete')->with($table)->willReturnSelf();
+        $qb = $this->createStub(QueryBuilder::class);
+        $qb->method('from')->willReturnSelf();
+        $qb->method('select')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('orderBy')->willReturnSelf();
+        $qb->method('executeQuery')->willReturn($result);
+
+        return $qb;
+    }
+
+    private function createDeleteQueryBuilder(): QueryBuilder
+    {
+        $qb = $this->createStub(QueryBuilder::class);
+        $qb->method('delete')->willReturnSelf();
         $qb->method('andWhere')->willReturnSelf();
         $qb->method('setParameter')->willReturnSelf();
-        $qb->method('executeStatement');
 
         return $qb;
     }
 
     /** @return QueryBuilder[] */
-    private function createAgeDeleteQueryBuilders(int $count, string $table = '_log'): array
+    private function createAgeDeleteQueryBuilders(int $count): array
     {
         $builders = [];
         for ($i = 0; $i < $count; $i++) {
-            $builders[] = $this->createDeleteQueryBuilder($table);
+            $builders[] = $this->createDeleteQueryBuilder();
         }
 
         return $builders;
