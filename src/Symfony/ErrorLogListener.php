@@ -4,6 +4,7 @@ namespace Gupalo\MonologDbalLogger\Symfony;
 
 use Monolog\ErrorHandler;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
@@ -13,6 +14,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Throwable;
 
@@ -51,12 +53,16 @@ class ErrorLogListener implements EventSubscriberInterface
         $exception = $event->getThrowable();
         $request = $event->getRequest();
 
+        // Client errors (404 from scanners, 405, 429, ...) are expected traffic, not server faults:
+        // keep them in the log, but below ERROR so they don't reach error trackers like Sentry.
+        $isClientError = $exception instanceof HttpExceptionInterface && $exception->getStatusCode() < 500;
+
         self::logException($this->logger, 'exception', $exception, [
             'ip' => $request->getClientIp(),
             'url' => $request->getUri(),
             'query' => self::stringify($request->query->all()),
             'request' => self::stringify($request->request->all()),
-        ]);
+        ], $isClientError ? LogLevel::WARNING : LogLevel::ERROR);
     }
 
     public function onConsoleCommand(ConsoleCommandEvent $event): void
@@ -118,12 +124,13 @@ class ErrorLogListener implements EventSubscriberInterface
         string $name,
         Throwable $exception,
         ?array $context = null,
+        string $level = LogLevel::ERROR,
     ): void {
         try {
-            $logger->error($name, self::formatExceptionContext($exception, $context));
+            $logger->log($level, $name, self::formatExceptionContext($exception, $context));
         } catch (Throwable $e) {
             try {
-                $logger->error($name, ['exception_message' => $e->getMessage()]);
+                $logger->log($level, $name, ['exception_message' => $e->getMessage()]);
             } catch (Throwable) {
             }
         }

@@ -6,6 +6,7 @@ use Exception;
 use Gupalo\MonologDbalLogger\Symfony\ErrorLogListener;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
@@ -14,6 +15,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class ErrorLogListenerTest extends TestCase
@@ -45,8 +50,8 @@ class ErrorLogListenerTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())
-            ->method('error')
-            ->with('exception', $this->callback(function (array $context) {
+            ->method('log')
+            ->with(LogLevel::ERROR, 'exception', $this->callback(function (array $context) {
                 return $context['exception_class'] === Exception::class
                     && $context['exception_message'] === 'Test error'
                     && $context['ip'] === '127.0.0.1'
@@ -60,6 +65,35 @@ class ErrorLogListenerTest extends TestCase
 
         $kernel = $this->createStub(HttpKernelInterface::class);
         $event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new Exception('Test error'));
+
+        $listener->onKernelException($event);
+    }
+
+    /** @return iterable<string, array{\Throwable, string}> */
+    public static function kernelExceptionLevelProvider(): iterable
+    {
+        yield 'generic exception' => [new Exception('boom'), LogLevel::ERROR];
+        yield '500 http exception' => [new HttpException(500, 'boom'), LogLevel::ERROR];
+        yield '503 http exception' => [new HttpException(503, 'down'), LogLevel::ERROR];
+        yield '404 not found' => [new NotFoundHttpException('No route found for "GET /wp-admin/install.php"'), LogLevel::WARNING];
+        yield '405 method not allowed' => [new MethodNotAllowedHttpException(['GET']), LogLevel::WARNING];
+        yield '429 too many requests' => [new TooManyRequestsHttpException(), LogLevel::WARNING];
+        yield '400 bad request' => [new HttpException(400, 'bad'), LogLevel::WARNING];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('kernelExceptionLevelProvider')]
+    public function testOnKernelExceptionLogsClientErrorsBelowError(\Throwable $exception, string $expectedLevel): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('log')
+            ->with($expectedLevel, 'exception', $this->callback(function (array $context) use ($exception) {
+                return $context['exception_class'] === get_class($exception);
+            }));
+
+        $listener = new ErrorLogListener($logger);
+        $kernel = $this->createStub(HttpKernelInterface::class);
+        $event = new ExceptionEvent($kernel, Request::create('http://localhost/x'), HttpKernelInterface::MAIN_REQUEST, $exception);
 
         $listener->onKernelException($event);
     }
@@ -173,8 +207,8 @@ class ErrorLogListenerTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())
-            ->method('error')
-            ->with('console.exception', $this->callback(function (array $context) {
+            ->method('log')
+            ->with(LogLevel::ERROR, 'console.exception', $this->callback(function (array $context) {
                 return $context['exception_class'] === Exception::class
                     && $context['exception_message'] === 'Command failed'
                     && $context['cmd'] === 'app:failing';
@@ -197,8 +231,8 @@ class ErrorLogListenerTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())
-            ->method('error')
-            ->with('console.exception', $this->callback(function (array $context) {
+            ->method('log')
+            ->with(LogLevel::ERROR, 'console.exception', $this->callback(function (array $context) {
                 return !isset($context['cmd']);
             }));
 
@@ -369,8 +403,8 @@ class ErrorLogListenerTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())
-            ->method('error')
-            ->with('test.error', $this->callback(function (array $context) {
+            ->method('log')
+            ->with(LogLevel::ERROR, 'test.error', $this->callback(function (array $context) {
                 return $context['exception_message'] === 'Error occurred';
             }));
 
@@ -381,7 +415,7 @@ class ErrorLogListenerTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->exactly(2))
-            ->method('error')
+            ->method('log')
             ->willReturnOnConsecutiveCalls(
                 $this->throwException(new Exception('Logger failed')),
                 null
