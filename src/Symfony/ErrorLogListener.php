@@ -146,32 +146,29 @@ class ErrorLogListener implements EventSubscriberInterface
         ], $context ?? []);
     }
 
+    private const int MAX_LENGTH = 10000;
+
     private static function stringify($data): string
     {
         if (is_string($data)) {
-            return self::mask(substr($data, 0, 10000));
+            return self::mask(substr($data, 0, self::MAX_LENGTH));
         }
 
-        // Mask every string value before encoding: a pattern run over the encoded JSON could
-        // match across neighbouring values, and json_encode's escaping (\" in a password)
-        // could hide a credential from it.
-        if (is_array($data)) {
-            array_walk_recursive($data, static function (mixed &$value): void {
-                if (is_string($value)) {
-                    $value = self::mask($value);
-                }
-            });
-        }
-
-        // Scanner probes send invalid UTF-8 and deeply nested query/body params. Substitute
-        // bad bytes instead of failing, and never cast an array to string: that raised
-        // "Array to string conversion" from inside the exception logger itself.
-        // A JsonSerializable can still throw; this runs while building the exception log context,
-        // so nothing may escape from here.
+        // Mask keys and values one by one, never the encoded JSON: a pattern run over the JSON
+        // could match across neighbouring values, and json_encode's escaping (\" in a password)
+        // could hide a credential from it. Parameter names are user input too, so keys are masked,
+        // and a JsonSerializable is expanded first so its output is masked like anything else.
+        // The work stays bounded like before (at most MAX_LENGTH bytes of strings are masked).
+        //
+        // Scanner probes send invalid UTF-8 and deeply nested params: substitute bad bytes instead
+        // of failing, and never cast an array to string ("Array to string conversion" used to be
+        // raised from inside this exception logger). Nothing may escape from here: it runs while
+        // building the exception log context.
         try {
-            $encoded = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
+            $budget = self::MAX_LENGTH;
+            $encoded = json_encode(self::sanitize($data, $budget), JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
             $error = json_last_error_msg();
-        } catch (Throwable $e) { // @phpstan-ignore catch.neverThrown (jsonSerialize() can throw through json_encode())
+        } catch (Throwable $e) {
             $encoded = false;
             $error = $e->getMessage();
         }
@@ -179,8 +176,40 @@ class ErrorLogListener implements EventSubscriberInterface
             return sprintf('[unencodable %s: %s]', get_debug_type($data), $error);
         }
 
-        // Keys aren't values: still mask e-mails there. This pattern can't cross a quote.
-        return self::maskEmails(substr($encoded, 0, 10000));
+        return substr($encoded, 0, self::MAX_LENGTH);
+    }
+
+    private static function sanitize(mixed $value, int &$budget, int $depth = 0): mixed
+    {
+        if ($depth > 64) {
+            return '[too deep]';
+        }
+        if ($value instanceof \JsonSerializable) {
+            return self::sanitize($value->jsonSerialize(), $budget, $depth + 1);
+        }
+        if (is_string($value)) {
+            // Charge the input that goes through the regexes, not the (possibly much shorter) output.
+            $slice = $budget > 0 ? substr($value, 0, $budget) : '';
+            $budget -= strlen($slice);
+
+            return '' === $slice ? '' : self::mask($slice);
+        }
+        if (is_object($value)) {
+            return sprintf('[%s]', get_debug_type($value));
+        }
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        $result = [];
+        foreach ($value as $key => $item) {
+            if (is_string($key)) {
+                $key = self::sanitize($key, $budget, $depth + 1);
+            }
+            $result[$key] = self::sanitize($item, $budget, $depth + 1);
+        }
+
+        return $result;
     }
 
     private static function mask(string $value): string
@@ -189,7 +218,8 @@ class ErrorLogListener implements EventSubscriberInterface
             return $value;
         }
         if (str_contains($value, '://')) {
-            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value);
+            // null on a PCRE failure (backtrack limit, ...): never let a value through unmasked.
+            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value) ?? '[mask failed]';
         }
 
         return self::maskEmails($value);
@@ -201,7 +231,7 @@ class ErrorLogListener implements EventSubscriberInterface
             return $value;
         }
 
-        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value);
+        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value) ?? '[mask failed]';
     }
 
     private function getCommandContext(Command $command, InputInterface $input): array

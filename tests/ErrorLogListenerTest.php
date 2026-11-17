@@ -530,4 +530,61 @@ class ErrorLogListenerTest extends TestCase
 
         $this->assertSame('[unencodable array: boom]', $result);
     }
+
+    public function testStringifyBoundsTheWorkOnLargeArrayValues(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $data = ['a' => str_repeat('x', 3_000_000), 'b' => str_repeat('y', 3_000_000), 'c' => 'user@example.com'];
+
+        $result = $method->invoke(null, $data);
+
+        $this->assertLessThanOrEqual(10000, strlen($result));
+        $this->assertStringNotContainsString('y', $result);
+        $this->assertStringNotContainsString('user@example.com', $result);
+    }
+
+    public function testStringifyNeverReturnsUnmaskedValuesWhenPcreFails(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $limit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '1');
+        try {
+            $result = $method->invoke(null, ['dsn' => 'mysql://user:secret@localhost/db '.str_repeat('a', 5000)]);
+        } finally {
+            ini_set('pcre.backtrack_limit', (string) $limit);
+        }
+
+        $this->assertStringNotContainsString('secret', $result);
+    }
+
+    public function testStringifyMasksKeysAndJsonSerializableOutput(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $object = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                return ['dsn' => 'mysql://u:objsecret@host/db', 'mail' => 'bob@example.com'];
+            }
+        };
+
+        $result = $method->invoke(null, ['mysql://user:keysecret@host' => '1', 'obj' => $object]);
+
+        $this->assertStringNotContainsString('keysecret', $result);
+        $this->assertStringNotContainsString('objsecret', $result);
+        $this->assertStringNotContainsString('bob@', $result);
+        $this->assertStringContainsString('mysql://user:***@host', $result);
+        $this->assertStringContainsString('mysql://u:***@host/db', $result);
+    }
+
+    public function testStringifyChargesTheBudgetForInputNotMaskedOutput(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $long = str_repeat('a', 9000).'@example.com';
+
+        $result = json_decode($method->invoke(null, [$long, $long, $long, $long]), true);
+
+        $this->assertSame('***@example.com', $result[0]);
+        $this->assertSame(str_repeat('a', 988), $result[1]);
+        $this->assertSame(['', ''], [$result[2], $result[3]]);
+    }
 }
