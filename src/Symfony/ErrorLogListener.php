@@ -139,25 +139,92 @@ class ErrorLogListener implements EventSubscriberInterface
         ], $context ?? []);
     }
 
+    private const MAX_LENGTH = 10000;
+
     private static function stringify($data): string
     {
-        if (!is_string($data)) {
-            try {
-                $data = json_encode($data, JSON_THROW_ON_ERROR, 10);
-            } catch (Throwable $e) {
-                $data = (string)$data;
-            }
+        if (is_string($data)) {
+            return self::mask(substr($data, 0, self::MAX_LENGTH));
         }
-        $result = substr($data, 0, 10000);
 
-        if (str_contains($result, '@')) {
-            if (str_contains($result, '://')) {
-                $result = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $result);
+        // Mask keys and values one by one, never the encoded JSON: a pattern run over the JSON
+        // could match across neighbouring values, and json_encode's escaping (\" in a password)
+        // could hide a credential from it. Parameter names are user input too, so keys are masked,
+        // and a JsonSerializable is expanded first so its output is masked like anything else.
+        // The work stays bounded like before (at most MAX_LENGTH bytes of strings are masked).
+        //
+        // Scanner probes send invalid UTF-8 and deeply nested params: substitute bad bytes instead
+        // of failing, and never cast an array to string ("Array to string conversion" used to be
+        // raised from inside this exception logger). Nothing may escape from here: it runs while
+        // building the exception log context.
+        try {
+            $budget = self::MAX_LENGTH;
+            $encoded = json_encode(self::sanitize($data, $budget), JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
+            $error = json_last_error_msg();
+        } catch (Throwable $e) {
+            $encoded = false;
+            $error = $e->getMessage();
+        }
+        if (false === $encoded) {
+            return sprintf('[unencodable %s: %s]', get_debug_type($data), $error);
+        }
+
+        return substr($encoded, 0, self::MAX_LENGTH);
+    }
+
+    private static function sanitize(mixed $value, int &$budget, int $depth = 0): mixed
+    {
+        if ($depth > 64) {
+            return '[too deep]';
+        }
+        if ($value instanceof \JsonSerializable) {
+            return self::sanitize($value->jsonSerialize(), $budget, $depth + 1);
+        }
+        if (is_string($value)) {
+            // Charge the input that goes through the regexes, not the (possibly much shorter) output.
+            $slice = $budget > 0 ? substr($value, 0, $budget) : '';
+            $budget -= strlen($slice);
+
+            return '' === $slice ? '' : self::mask($slice);
+        }
+        if (is_object($value)) {
+            return sprintf('[%s]', get_debug_type($value));
+        }
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        $result = [];
+        foreach ($value as $key => $item) {
+            if (is_string($key)) {
+                $key = self::sanitize($key, $budget, $depth + 1);
             }
-            $result = preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $result);
+            $result[$key] = self::sanitize($item, $budget, $depth + 1);
         }
 
         return $result;
+    }
+
+    private static function mask(string $value): string
+    {
+        if (!str_contains($value, '@')) {
+            return $value;
+        }
+        if (str_contains($value, '://')) {
+            // null on a PCRE failure (backtrack limit, ...): never let a value through unmasked.
+            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value) ?? '[mask failed]';
+        }
+
+        return self::maskEmails($value);
+    }
+
+    private static function maskEmails(string $value): string
+    {
+        if (!str_contains($value, '@')) {
+            return $value;
+        }
+
+        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value) ?? '[mask failed]';
     }
 
     private function getCommandContext(Command $command, InputInterface $input): array
