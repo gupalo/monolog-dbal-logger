@@ -556,4 +556,23 @@ class ErrorLogListenerTest extends TestCase
 
         $this->assertStringNotContainsString('secret', $result);
     }
+
+    public function testStringifyMasksKeysAndJsonSerializableOutput(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $object = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                return ['dsn' => 'mysql://u:objsecret@host/db', 'mail' => 'bob@example.com'];
+            }
+        };
+
+        $result = $method->invoke(null, ['mysql://user:keysecret@host' => '1', 'obj' => $object]);
+
+        $this->assertStringNotContainsString('keysecret', $result);
+        $this->assertStringNotContainsString('objsecret', $result);
+        $this->assertStringNotContainsString('bob@', $result);
+        $this->assertStringContainsString('mysql://user:***@host', $result);
+        $this->assertStringContainsString('mysql://u:***@host/db', $result);
+    }
 }
