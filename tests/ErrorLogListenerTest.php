@@ -495,4 +495,34 @@ class ErrorLogListenerTest extends TestCase
 
         $this->assertStringStartsWith('[unencodable array:', $result);
     }
+
+    public function testStringifyMasksUrlCredentialsInArraysWithoutCrossingValues(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+
+        $result = $method->invoke(null, [
+            'values' => ['http://example.org:8080/path', 'alice@example.com'],
+            'dsn' => 'mysql://user:secret@localhost/db',
+        ]);
+
+        $this->assertStringContainsString('"http://example.org:8080/path"', $result);
+        $this->assertStringContainsString('"***@example.com"', $result);
+        $this->assertStringContainsString('mysql://user:***@localhost/db', $result);
+        $this->assertStringNotContainsString('secret', $result);
+    }
+
+    public function testStringifyDoesNotLetJsonSerializeExceptionsEscape(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $bad = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                throw new \RuntimeException('boom');
+            }
+        };
+
+        $result = $method->invoke(null, ['x' => $bad]);
+
+        $this->assertSame('[unencodable array: boom]', $result);
+    }
 }

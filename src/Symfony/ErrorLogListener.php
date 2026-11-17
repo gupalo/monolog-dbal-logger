@@ -152,14 +152,22 @@ class ErrorLogListener implements EventSubscriberInterface
             // Scanner probes send invalid UTF-8 and deeply nested query/body params. Substitute
             // bad bytes instead of failing, and never cast an array to string: that raised
             // "Array to string conversion" from inside the exception logger itself.
-            $encoded = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
-            $data = false !== $encoded ? $encoded : sprintf('[unencodable %s: %s]', get_debug_type($data), json_last_error_msg());
+            // A JsonSerializable can still throw; this runs while building the exception log context,
+            // so nothing may escape from here.
+            try {
+                $encoded = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
+                $error = json_last_error_msg();
+            } catch (Throwable $e) { // @phpstan-ignore catch.neverThrown (jsonSerialize() can throw through json_encode())
+                $encoded = false;
+                $error = $e->getMessage();
+            }
+            $data = false !== $encoded ? $encoded : sprintf('[unencodable %s: %s]', get_debug_type($data), $error);
         }
         $result = substr($data, 0, 10000);
 
         if (str_contains($result, '@')) {
             if (str_contains($result, '://')) {
-                $result = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $result);
+                $result = preg_replace('#(://[^\s@:"]+:)[^\s@:"]+@#', '$1***@', $result);
             }
             $result = preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $result);
         }
