@@ -146,20 +146,27 @@ class ErrorLogListener implements EventSubscriberInterface
         ], $context ?? []);
     }
 
+    private const int MAX_LENGTH = 10000;
+
     private static function stringify($data): string
     {
         if (is_string($data)) {
-            return self::mask(substr($data, 0, 10000));
+            return self::mask(substr($data, 0, self::MAX_LENGTH));
         }
 
         // Mask every string value before encoding: a pattern run over the encoded JSON could
         // match across neighbouring values, and json_encode's escaping (\" in a password)
         // could hide a credential from it.
+        // The work stays bounded like before (the old code masked at most 10000 bytes in total):
+        // each value is cut to what is left of the budget before any regex runs on it.
         if (is_array($data)) {
-            array_walk_recursive($data, static function (mixed &$value): void {
-                if (is_string($value)) {
-                    $value = self::mask($value);
+            $budget = self::MAX_LENGTH;
+            array_walk_recursive($data, static function (mixed &$value) use (&$budget): void {
+                if (!is_string($value)) {
+                    return;
                 }
+                $value = $budget > 0 ? self::mask(substr($value, 0, $budget)) : '';
+                $budget -= strlen($value);
             });
         }
 
@@ -180,7 +187,7 @@ class ErrorLogListener implements EventSubscriberInterface
         }
 
         // Keys aren't values: still mask e-mails there. This pattern can't cross a quote.
-        return self::maskEmails(substr($encoded, 0, 10000));
+        return self::maskEmails(substr($encoded, 0, self::MAX_LENGTH));
     }
 
     private static function mask(string $value): string
@@ -189,7 +196,8 @@ class ErrorLogListener implements EventSubscriberInterface
             return $value;
         }
         if (str_contains($value, '://')) {
-            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value);
+            // null on a PCRE failure (backtrack limit, ...): never let a value through unmasked.
+            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value) ?? '[mask failed]';
         }
 
         return self::maskEmails($value);
@@ -201,7 +209,7 @@ class ErrorLogListener implements EventSubscriberInterface
             return $value;
         }
 
-        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value);
+        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value) ?? '[mask failed]';
     }
 
     private function getCommandContext(Command $command, InputInterface $input): array

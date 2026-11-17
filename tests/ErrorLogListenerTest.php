@@ -530,4 +530,30 @@ class ErrorLogListenerTest extends TestCase
 
         $this->assertSame('[unencodable array: boom]', $result);
     }
+
+    public function testStringifyBoundsTheWorkOnLargeArrayValues(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $data = ['a' => str_repeat('x', 3_000_000), 'b' => str_repeat('y', 3_000_000), 'c' => 'user@example.com'];
+
+        $result = $method->invoke(null, $data);
+
+        $this->assertLessThanOrEqual(10000, strlen($result));
+        $this->assertStringNotContainsString('y', $result);
+        $this->assertStringNotContainsString('user@example.com', $result);
+    }
+
+    public function testStringifyNeverReturnsUnmaskedValuesWhenPcreFails(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $limit = ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', '1');
+        try {
+            $result = $method->invoke(null, ['dsn' => 'mysql://user:secret@localhost/db '.str_repeat('a', 5000)]);
+        } finally {
+            ini_set('pcre.backtrack_limit', (string) $limit);
+        }
+
+        $this->assertStringNotContainsString('secret', $result);
+    }
 }
