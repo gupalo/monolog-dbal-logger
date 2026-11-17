@@ -188,10 +188,11 @@ class ErrorLogListener implements EventSubscriberInterface
             return self::sanitize($value->jsonSerialize(), $budget, $depth + 1);
         }
         if (is_string($value)) {
-            $value = $budget > 0 ? self::mask(substr($value, 0, $budget)) : '';
-            $budget -= strlen($value);
+            // Charge the input that goes through the regexes, not the (possibly much shorter) output.
+            $slice = $budget > 0 ? substr($value, 0, $budget) : '';
+            $budget -= strlen($slice);
 
-            return $value;
+            return '' === $slice ? '' : self::mask($slice);
         }
         if (is_object($value)) {
             return sprintf('[%s]', get_debug_type($value));

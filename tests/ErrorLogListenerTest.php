@@ -575,4 +575,16 @@ class ErrorLogListenerTest extends TestCase
         $this->assertStringContainsString('mysql://user:***@host', $result);
         $this->assertStringContainsString('mysql://u:***@host/db', $result);
     }
+
+    public function testStringifyChargesTheBudgetForInputNotMaskedOutput(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $long = str_repeat('a', 9000).'@example.com';
+
+        $result = json_decode($method->invoke(null, [$long, $long, $long, $long]), true);
+
+        $this->assertSame('***@example.com', $result[0]);
+        $this->assertSame(str_repeat('a', 988), $result[1]);
+        $this->assertSame(['', ''], [$result[2], $result[3]]);
+    }
 }
