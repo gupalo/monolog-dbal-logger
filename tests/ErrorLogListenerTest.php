@@ -503,12 +503,17 @@ class ErrorLogListenerTest extends TestCase
         $result = $method->invoke(null, [
             'values' => ['http://example.org:8080/path', 'alice@example.com'],
             'dsn' => 'mysql://user:secret@localhost/db',
+            'quoted' => 'redis://u:se"cr\\et@host:6379',
+            'user@example.org' => 'key holds an e-mail',
         ]);
 
         $this->assertStringContainsString('"http://example.org:8080/path"', $result);
         $this->assertStringContainsString('"***@example.com"', $result);
         $this->assertStringContainsString('mysql://user:***@localhost/db', $result);
         $this->assertStringNotContainsString('secret', $result);
+        $this->assertStringContainsString('redis://u:***@host:6379', $result);
+        $this->assertStringNotContainsString('cr', $result);
+        $this->assertStringContainsString('"***@example.org"', $result);
     }
 
     public function testStringifyDoesNotLetJsonSerializeExceptionsEscape(): void
