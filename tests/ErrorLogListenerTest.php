@@ -468,4 +468,31 @@ class ErrorLogListenerTest extends TestCase
 
         $this->assertEquals('{"key":"value"}', $result);
     }
+
+    public function testStringifyKeepsArraysWithInvalidUtf8(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+
+        $result = $method->invoke(null, ['q' => "bad\xB1\x31byte"]);
+
+        $this->assertStringContainsString('"q":"bad', $result);
+    }
+
+    public function testStringifyDoesNotCastTooDeepArraysToString(): void
+    {
+        $method = (new \ReflectionClass(ErrorLogListener::class))->getMethod('stringify');
+        $deep = 'leaf';
+        for ($i = 0; $i < 12; ++$i) {
+            $deep = ['a' => $deep];
+        }
+
+        set_error_handler(static fn (int $no, string $msg): never => throw new \ErrorException($msg, 0, $no));
+        try {
+            $result = $method->invoke(null, $deep);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertStringStartsWith('[unencodable array:', $result);
+    }
 }

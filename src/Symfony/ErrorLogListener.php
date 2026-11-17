@@ -149,11 +149,11 @@ class ErrorLogListener implements EventSubscriberInterface
     private static function stringify($data): string
     {
         if (!is_string($data)) {
-            try {
-                $data = json_encode($data, JSON_THROW_ON_ERROR, 10);
-            } catch (Throwable) {
-                $data = (string)$data;
-            }
+            // Scanner probes send invalid UTF-8 and deeply nested query/body params. Substitute
+            // bad bytes instead of failing, and never cast an array to string: that raised
+            // "Array to string conversion" from inside the exception logger itself.
+            $encoded = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
+            $data = false !== $encoded ? $encoded : sprintf('[unencodable %s: %s]', get_debug_type($data), json_last_error_msg());
         }
         $result = substr($data, 0, 10000);
 
