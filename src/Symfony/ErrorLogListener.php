@@ -141,23 +141,60 @@ class ErrorLogListener implements EventSubscriberInterface
 
     private static function stringify($data): string
     {
-        if (!is_string($data)) {
-            try {
-                $data = json_encode($data, JSON_THROW_ON_ERROR, 10);
-            } catch (Throwable $e) {
-                $data = (string)$data;
-            }
-        }
-        $result = substr($data, 0, 10000);
-
-        if (str_contains($result, '@')) {
-            if (str_contains($result, '://')) {
-                $result = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $result);
-            }
-            $result = preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $result);
+        if (is_string($data)) {
+            return self::mask(substr($data, 0, 10000));
         }
 
-        return $result;
+        // Mask every string value before encoding: a pattern run over the encoded JSON could
+        // match across neighbouring values, and json_encode's escaping (\" in a password)
+        // could hide a credential from it.
+        if (is_array($data)) {
+            array_walk_recursive($data, static function (mixed &$value): void {
+                if (is_string($value)) {
+                    $value = self::mask($value);
+                }
+            });
+        }
+
+        // Scanner probes send invalid UTF-8 and deeply nested query/body params. Substitute
+        // bad bytes instead of failing, and never cast an array to string: that raised
+        // "Array to string conversion" from inside the exception logger itself.
+        // A JsonSerializable can still throw; this runs while building the exception log context,
+        // so nothing may escape from here.
+        try {
+            $encoded = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES, 10);
+            $error = json_last_error_msg();
+        } catch (Throwable $e) { // @phpstan-ignore catch.neverThrown (jsonSerialize() can throw through json_encode())
+            $encoded = false;
+            $error = $e->getMessage();
+        }
+        if (false === $encoded) {
+            return sprintf('[unencodable %s: %s]', get_debug_type($data), $error);
+        }
+
+        // Keys aren't values: still mask e-mails there. This pattern can't cross a quote.
+        return self::maskEmails(substr($encoded, 0, 10000));
+    }
+
+    private static function mask(string $value): string
+    {
+        if (!str_contains($value, '@')) {
+            return $value;
+        }
+        if (str_contains($value, '://')) {
+            $value = preg_replace('#(://[^\s@:]+:)[^\s@:]+@#', '$1***@', $value);
+        }
+
+        return self::maskEmails($value);
+    }
+
+    private static function maskEmails(string $value): string
+    {
+        if (!str_contains($value, '@')) {
+            return $value;
+        }
+
+        return preg_replace('#[a-zA-Z\d.\-_]+(@[a-zA-Z\d]+([\-.][a-z\d]+)*\.[a-z]{2,6})#', '***$1', $value);
     }
 
     private function getCommandContext(Command $command, InputInterface $input): array
