@@ -69,6 +69,80 @@ class ErrorLogListenerTest extends TestCase
         $listener->onKernelException($event);
     }
 
+    public function testOnKernelExceptionFiltersRequestParamsBeforeStringifying(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('log')
+            ->with(LogLevel::ERROR, 'exception', $this->callback(function (array $context) {
+                return $context['query'] === '{"token":"[hidden]","page":"2"}'
+                    && $context['request'] === '{"password":"[hidden]","name":"x"}'
+                    // the raw token would be back in the query string of the URL
+                    && $context['url'] === 'http://localhost/login';
+            }));
+
+        $listener = new class($logger) extends ErrorLogListener {
+            protected function filterRequestParams(array $params): array
+            {
+                return array_replace($params, array_intersect_key(['token' => '[hidden]', 'password' => '[hidden]'], $params));
+            }
+        };
+
+        $request = Request::create('http://localhost/login?token=t&page=2', 'POST', ['password' => 'hunter2', 'name' => 'x']);
+        $kernel = $this->createStub(HttpKernelInterface::class);
+
+        $listener->onKernelException(new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new Exception('boom')));
+    }
+
+    public function testOnKernelExceptionKeepsTheUrlWhenTheFilterLeavesTheQueryAsItIs(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('log')
+            ->with(LogLevel::ERROR, 'exception', $this->callback(function (array $context) {
+                return $context['url'] === 'http://localhost/search?page=2&q=x'
+                    && $context['query'] === '{"page":"2","q":"x"}';
+            }));
+
+        $listener = new class($logger) extends ErrorLogListener {
+            protected function filterRequestParams(array $params): array
+            {
+                unset($params['password']);
+
+                return $params;
+            }
+        };
+
+        $request = Request::create('http://localhost/search?page=2&q=x', 'POST', ['password' => 'hunter2']);
+        $kernel = $this->createStub(HttpKernelInterface::class);
+
+        $listener->onKernelException(new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new Exception('boom')));
+    }
+
+    public function testOnKernelExceptionDoesNotLogParamsWhenTheFilterFails(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('log')
+            ->with(LogLevel::ERROR, 'exception', $this->callback(function (array $context) {
+                return $context['query'] === '[filter failed]'
+                    && $context['request'] === '[filter failed]'
+                    && $context['url'] === 'http://localhost/login';
+            }));
+
+        $listener = new class($logger) extends ErrorLogListener {
+            protected function filterRequestParams(array $params): array
+            {
+                throw new \RuntimeException('broken filter');
+            }
+        };
+
+        $request = Request::create('http://localhost/login?token=t', 'POST', ['password' => 'hunter2']);
+        $kernel = $this->createStub(HttpKernelInterface::class);
+
+        $listener->onKernelException(new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new Exception('boom')));
+    }
+
     /** @return iterable<string, array{\Throwable, string}> */
     public static function kernelExceptionLevelProvider(): iterable
     {
