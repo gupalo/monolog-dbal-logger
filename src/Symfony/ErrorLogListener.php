@@ -57,11 +57,19 @@ class ErrorLogListener implements EventSubscriberInterface
         // keep them in the log, but below ERROR so they don't reach error trackers like Sentry.
         $isClientError = $exception instanceof HttpExceptionInterface && $exception->getStatusCode() < 500;
 
+        $query = $request->query->all();
+        $filteredQuery = $this->filterParams($query);
+        $filteredBody = $this->filterParams($request->request->all());
+
         self::logException($this->logger, 'exception', $exception, [
             'ip' => $request->getClientIp(),
-            'url' => $request->getUri(),
-            'query' => $this->stringifyParams($request->query->all()),
-            'request' => $this->stringifyParams($request->request->all()),
+            // The URL carries the query string too: once the filter changed (or failed on) the query, the URL
+            // is logged without it, the filtered query being logged next to it.
+            'url' => $filteredQuery === $query
+                ? $request->getUri()
+                : $request->getSchemeAndHttpHost().$request->getBaseUrl().$request->getPathInfo(),
+            'query' => null === $filteredQuery ? self::FILTER_FAILED : self::stringify($filteredQuery),
+            'request' => null === $filteredBody ? self::FILTER_FAILED : self::stringify($filteredBody),
         ], $isClientError ? LogLevel::WARNING : LogLevel::ERROR);
     }
 
@@ -75,16 +83,18 @@ class ErrorLogListener implements EventSubscriberInterface
         return $params;
     }
 
-    private function stringifyParams(array $params): string
+    private const string FILTER_FAILED = '[filter failed]';
+
+    /**
+     * Null when the filter throws: never log what it was there to hide; nothing may escape the exception logger.
+     */
+    private function filterParams(array $params): ?array
     {
         try {
-            $params = $this->filterRequestParams($params);
+            return $this->filterRequestParams($params);
         } catch (Throwable) {
-            // Never log what the filter was there to hide; nothing may escape the exception logger.
-            return '[filter failed]';
+            return null;
         }
-
-        return self::stringify($params);
     }
 
     public function onConsoleCommand(ConsoleCommandEvent $event): void

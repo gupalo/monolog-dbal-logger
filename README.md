@@ -75,7 +75,9 @@ tokens), extend it and override `filterRequestParams()`, which gets each of them
         }
     }
 
-If it throws, the parameters are logged as `[filter failed]`.
+Once the filter changed the query, `url` is logged without its query string (which would carry the
+unfiltered values). If the filter throws, the parameters are logged as `[filter failed]`, and `url` without
+its query string.
 
 Configure
 ---------
