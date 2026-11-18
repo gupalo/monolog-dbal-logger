@@ -61,6 +61,22 @@ Configuration example:
                 id: 'monolog.dbal_handler' # note - no "@"
                 channels: ["!event", "!request", "!security"]
 
+On an HTTP exception `ErrorLogListener` logs the query and the body as JSON strings (`query`, `request`),
+whose fields a Monolog processor can no longer reach. To hash or drop sensitive parameters (passwords,
+tokens), extend it and override `filterRequestParams()`, which gets each of them as an array first:
+
+    class ErrorLogListener extends \Gupalo\MonologDbalLogger\Symfony\ErrorLogListener
+    {
+        protected function filterRequestParams(array $params): array
+        {
+            unset($params['password']);
+
+            return $params;
+        }
+    }
+
+If it throws, the parameters are logged as `[filter failed]`.
+
 Configure
 ---------
 

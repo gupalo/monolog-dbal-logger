@@ -60,9 +60,31 @@ class ErrorLogListener implements EventSubscriberInterface
         self::logException($this->logger, 'exception', $exception, [
             'ip' => $request->getClientIp(),
             'url' => $request->getUri(),
-            'query' => self::stringify($request->query->all()),
-            'request' => self::stringify($request->request->all()),
+            'query' => $this->stringifyParams($request->query->all()),
+            'request' => $this->stringifyParams($request->request->all()),
         ], $isClientError ? LogLevel::WARNING : LogLevel::ERROR);
+    }
+
+    /**
+     * Override to hash or drop sensitive request parameters (passwords, tokens) before they are logged.
+     * The query and the body are logged as JSON strings, whose fields a Monolog processor can no longer
+     * reach: this is the last point where they are still an array.
+     */
+    protected function filterRequestParams(array $params): array
+    {
+        return $params;
+    }
+
+    private function stringifyParams(array $params): string
+    {
+        try {
+            $params = $this->filterRequestParams($params);
+        } catch (Throwable) {
+            // Never log what the filter was there to hide; nothing may escape the exception logger.
+            return '[filter failed]';
+        }
+
+        return self::stringify($params);
     }
 
     public function onConsoleCommand(ConsoleCommandEvent $event): void
