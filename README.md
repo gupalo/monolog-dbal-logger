@@ -164,3 +164,5 @@ Other
 -----
 
 See `tests`.
+
+Release history: [CHANGELOG.md](CHANGELOG.md).
