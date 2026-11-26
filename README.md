@@ -144,6 +144,10 @@ Add to `config/packages/doctrine.yaml`
                     prefix: 'Gupalo\MonologDbalLogger\Entity'
                     alias: Gupalo
 
+The `Log` entity maps the full table from "Extend" above exactly, so `doctrine:schema:update --dump-sql`
+prints nothing for `_log`. `context` is a TEXT column (the logger truncates it, so it is not always valid
+JSON): `getContext()` decodes it and returns `['raw' => <text>]` when it can't, `getContextRaw()` returns the text.
+
 Create controller. Override if needed
 
     class LogCrudController extends \Gupalo\MonologDbalLogger\EasyAdmin\Controller\LogCrudController

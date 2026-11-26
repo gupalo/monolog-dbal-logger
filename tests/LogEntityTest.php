@@ -5,6 +5,7 @@ namespace Gupalo\MonologDbalLogger\Tests;
 use DateTimeImmutable;
 use Gupalo\MonologDbalLogger\Entity\Log;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 class LogEntityTest extends TestCase
 {
@@ -26,7 +27,7 @@ class LogEntityTest extends TestCase
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getLevelName());
+        $this->assertNull($log->getLevelName());
     }
 
     public function testGetMessage(): void
@@ -40,7 +41,8 @@ class LogEntityTest extends TestCase
     {
         $log = new Log();
 
-        $this->assertEquals([], $log->getContext());
+        $this->assertNull($log->getContext());
+        $this->assertNull($log->getContextRaw());
     }
 
     public function testGetChannel(): void
@@ -54,21 +56,21 @@ class LogEntityTest extends TestCase
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getCmd());
+        $this->assertNull($log->getCmd());
     }
 
     public function testGetMethod(): void
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getMethod());
+        $this->assertNull($log->getMethod());
     }
 
     public function testGetUid(): void
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getUid());
+        $this->assertNull($log->getUid());
     }
 
     public function testGetCount(): void
@@ -96,28 +98,73 @@ class LogEntityTest extends TestCase
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getExceptionClass());
+        $this->assertNull($log->getExceptionClass());
     }
 
     public function testGetExceptionMessage(): void
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getExceptionMessage());
+        $this->assertNull($log->getExceptionMessage());
     }
 
     public function testGetExceptionLine(): void
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getExceptionLine());
+        $this->assertNull($log->getExceptionLine());
     }
 
     public function testGetExceptionTrace(): void
     {
         $log = new Log();
 
-        $this->assertEquals('', $log->getExceptionTrace());
+        $this->assertNull($log->getExceptionTrace());
+    }
+
+    public function testGetContextDecodesJson(): void
+    {
+        $log = $this->logWithContext('{"a":1,"b":{"c":"d"}}');
+
+        $this->assertSame(['a' => 1, 'b' => ['c' => 'd']], $log->getContext());
+        $this->assertSame('{"a":1,"b":{"c":"d"}}', $log->getContextRaw());
+    }
+
+    public function testGetContextKeepsTruncatedJsonAsRaw(): void
+    {
+        $log = $this->logWithContext('{"a":"trunc');
+
+        $this->assertSame(['raw' => '{"a":"trunc'], $log->getContext());
+    }
+
+    public function testGetContextKeepsScalarJsonAsRaw(): void
+    {
+        $log = $this->logWithContext('"just a string"');
+
+        $this->assertSame(['raw' => '"just a string"'], $log->getContext());
+    }
+
+    public function testGetContextEmptyIsNull(): void
+    {
+        $this->assertNull($this->logWithContext('')->getContext());
+    }
+
+    public function testContextReadThroughPropertyAccessIsDecoded(): void
+    {
+        // EasyAdmin (DbalLoggerYamlField) and Symfony forms read "context" via PropertyAccess, i.e. getContext()
+        $log = $this->logWithContext('{"a":{"b":1}}');
+
+        $value = PropertyAccess::createPropertyAccessor()->getValue($log, 'context');
+
+        $this->assertSame(['a' => ['b' => 1]], $value);
+    }
+
+    private function logWithContext(string $context): Log
+    {
+        $log = new Log();
+        (new \ReflectionProperty(Log::class, 'context'))->setValue($log, $context);
+
+        return $log;
     }
 
     public function testEntityCanBeInstantiated(): void
