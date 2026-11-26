@@ -5,6 +5,7 @@ namespace Gupalo\MonologDbalLogger\Tests;
 use DateTimeImmutable;
 use Gupalo\MonologDbalLogger\Entity\Log;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 class LogEntityTest extends TestCase
 {
@@ -146,6 +147,16 @@ class LogEntityTest extends TestCase
     public function testGetContextEmptyIsNull(): void
     {
         $this->assertNull($this->logWithContext('')->getContext());
+    }
+
+    public function testContextReadThroughPropertyAccessIsDecoded(): void
+    {
+        // EasyAdmin (DbalLoggerYamlField) and Symfony forms read "context" via PropertyAccess, i.e. getContext()
+        $log = $this->logWithContext('{"a":{"b":1}}');
+
+        $value = PropertyAccess::createPropertyAccessor()->getValue($log, 'context');
+
+        $this->assertSame(['a' => ['b' => 1]], $value);
     }
 
     private function logWithContext(string $context): Log

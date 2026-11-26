@@ -53,8 +53,10 @@ class LogSchemaTest extends TestCase
     private const string DATABASE_URL_ENV = 'MONOLOG_DBAL_LOGGER_TEST_DATABASE_URL';
 
     /**
-     * No database needed: the table built from the entity metadata is compared with the table that
-     * DBAL introspects from LOG_TABLE_DDL on MariaDB (built here by hand, verified by the DB test).
+     * No database needed: the table built from the entity metadata is compared with expectedLogTable(),
+     * a hand-written fixture of what DBAL introspects from LOG_TABLE_DDL on MariaDB. The fixture itself is
+     * checked against a real server only by testSchemaUpdateIsEmptyAgainstRealLogTable (run it when
+     * changing either the DDL or the fixture).
      */
     public function testMappingMatchesLogTable(): void
     {
@@ -64,7 +66,7 @@ class LogSchemaTest extends TestCase
         $schema = (new SchemaTool($em))->getSchemaFromMetadata([$em->getClassMetadata(Log::class)]);
         $mapped = $schema->getTable('_log');
 
-        $diff = (new Comparator($connection->getDatabasePlatform()))->compareTables(self::introspectedLogTable(), $mapped);
+        $diff = (new Comparator($connection->getDatabasePlatform()))->compareTables(self::expectedLogTable(), $mapped);
 
         self::assertTrue($diff->isEmpty(), 'Log entity mapping drifted from the _log table: ' . implode('; ', $connection->getDatabasePlatform()->getAlterTableSQL($diff)));
         self::assertTrue($mapped->hasIndex('log_created_at_level'));
@@ -120,8 +122,11 @@ class LogSchemaTest extends TestCase
         return new EntityManager($connection, $config);
     }
 
-    /** What DBAL's MariaDB schema manager returns for LOG_TABLE_DDL. */
-    private static function introspectedLogTable(): Table
+    /**
+     * Fixture: what DBAL's MariaDB schema manager returns for LOG_TABLE_DDL (keep the two in sync;
+     * the DB test verifies the DDL side).
+     */
+    private static function expectedLogTable(): Table
     {
         $t = new Table('_log');
         $t->addColumn('id', Types::BIGINT, ['unsigned' => true, 'autoincrement' => true]);
