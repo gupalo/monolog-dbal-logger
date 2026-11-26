@@ -15,6 +15,9 @@ vendor/bin/phpunit
 # Run single test
 vendor/bin/phpunit tests/MonologDbalCleanerTest.php
 
+# Schema test against a real MariaDB/MySQL (creates and drops its own scratch database; skipped when unset)
+MONOLOG_DBAL_LOGGER_TEST_DATABASE_URL='mysql://root:pass@127.0.0.1:3306/?serverVersion=10.11.7-MariaDB' vendor/bin/phpunit tests/LogSchemaTest.php
+
 # Static analysis
 vendor/bin/phpstan analyse
 ```

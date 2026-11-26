@@ -1,19 +1,13 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$channel \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$cmd \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$cmd \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Entity/Log.php
-
-		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$context \(array\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$context \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
@@ -31,25 +25,25 @@ parameters:
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionClass \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionClass \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionLine \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionLine \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionMessage \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionMessage \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionTrace \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$exceptionTrace \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
@@ -61,25 +55,13 @@ parameters:
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$level \(int\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$levelName \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$levelName \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Entity/Log.php
-
-		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$message \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Entity/Log.php
-
-		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$method \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$method \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
@@ -91,7 +73,7 @@ parameters:
 			path: src/Entity/Log.php
 
 		-
-			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$uid \(string\|null\) is never assigned null so it can be removed from the property type\.$#'
+			message: '#^Property Gupalo\\MonologDbalLogger\\Entity\\Log\:\:\$uid \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Log.php
